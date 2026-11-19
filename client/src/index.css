@@ -164,3 +164,81 @@ button.secondary {
   color: var(--text-h);
   font-weight: 500;
 }
+
+/* App layout: left sidebar + main content */
+.layout {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 12px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+.sidebar-title {
+  margin: 0 8px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.sidebar-empty {
+  padding: 8px;
+}
+
+.sidebar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-item {
+  width: 100%;
+  text-align: left;
+  font-weight: 500;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+}
+
+.sidebar-item:hover {
+  background: var(--bg);
+}
+
+.sidebar-item.is-selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.main {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+@media (max-width: 720px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 40svh;
+  }
+}
