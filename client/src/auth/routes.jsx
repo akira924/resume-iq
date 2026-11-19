@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from './useAuth'
+import { ROLE } from '../constants'
 
 function Loading() {
   return (
@@ -15,6 +16,13 @@ export function ProtectedRoute() {
   const location = useLocation()
   if (loading) return <Loading />
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />
+  return <Outlet />
+}
+
+// Only for admins; anyone else is sent back to /home. Use inside ProtectedRoute.
+export function AdminRoute() {
+  const { user } = useAuth()
+  if (user?.role !== ROLE.ADMIN) return <Navigate to="/home" replace />
   return <Outlet />
 }
 

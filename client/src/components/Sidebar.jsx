@@ -1,6 +1,14 @@
 // Left sidebar with a list of selectable items.
 // items: [{ id, label }]; selectedId: id of the active item (or null).
-export default function Sidebar({ title, items = [], selectedId = null, onSelect, emptyText = 'No items yet' }) {
+// footer: optional content pinned to the bottom of the sidebar.
+export default function Sidebar({
+  title,
+  items = [],
+  selectedId = null,
+  onSelect,
+  emptyText = 'No items yet',
+  footer,
+}) {
   return (
     <aside className="sidebar">
       {title && <h2 className="sidebar-title">{title}</h2>}
@@ -25,6 +33,7 @@ export default function Sidebar({ title, items = [], selectedId = null, onSelect
           })}
         </ul>
       )}
+      {footer && <div className="sidebar-footer">{footer}</div>}
     </aside>
   )
 }

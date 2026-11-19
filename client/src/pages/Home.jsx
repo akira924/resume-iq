@@ -1,14 +1,18 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
-import { ROLE_LABELS } from '../constants'
+import { ROLE, ROLE_LABELS } from '../constants'
 import Sidebar from '../components/Sidebar'
+
+const ADMIN_ITEMS = [{ id: 'users', label: 'Users' }]
 
 export default function Home() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [items] = useState([])
-  const [selectedId, setSelectedId] = useState(null)
+  const location = useLocation()
+
+  const items = user.role === ROLE.ADMIN ? ADMIN_ITEMS : []
+  // /home/users -> 'users'; /home -> null
+  const selectedId = location.pathname.split('/')[2] || null
 
   async function onLogout() {
     await logout()
@@ -17,21 +21,25 @@ export default function Home() {
 
   return (
     <div className="layout">
-      <Sidebar items={items} selectedId={selectedId} onSelect={setSelectedId} />
+      <Sidebar
+        items={items}
+        selectedId={selectedId}
+        onSelect={(id) => navigate(`/home/${id}`)}
+        footer={
+          <div className="sidebar-user">
+            <div>
+              <div className="sidebar-user-name">{user.name}</div>
+              <div className="muted">{ROLE_LABELS[user.role] ?? user.role}</div>
+            </div>
+            <button type="button" className="secondary small" onClick={onLogout}>
+              Log out
+            </button>
+          </div>
+        }
+      />
 
       <main className="main">
-        <div className="card">
-          <h1>Welcome, {user.name}</h1>
-          <dl className="details">
-            <dt>Name</dt>
-            <dd>{user.name}</dd>
-            <dt>Role</dt>
-            <dd>{ROLE_LABELS[user.role] ?? user.role}</dd>
-          </dl>
-          <button type="button" className="secondary" onClick={onLogout}>
-            Log out
-          </button>
-        </div>
+        <Outlet />
       </main>
     </div>
   )
