@@ -1,9 +1,11 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
-import { GuestRoute, ProtectedRoute } from './auth/routes'
+import { AdminRoute, GuestRoute, ProtectedRoute } from './auth/routes'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
+import Welcome from './pages/Welcome'
+import Users from './pages/Users'
 
 export default function App() {
   return (
@@ -15,7 +17,13 @@ export default function App() {
             <Route path="/register" element={<Register />} />
           </Route>
           <Route element={<ProtectedRoute />}>
-            <Route path="/home" element={<Home />} />
+            {/* Home is the layout (sidebar + content); child routes render inside it. */}
+            <Route path="/home" element={<Home />}>
+              <Route index element={<Welcome />} />
+              <Route element={<AdminRoute />}>
+                <Route path="users" element={<Users />} />
+              </Route>
+            </Route>
           </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
