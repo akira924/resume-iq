@@ -4,13 +4,14 @@ import { ROLE, ROLE_LABELS } from '../constants'
 import Sidebar from '../components/Sidebar'
 
 const ADMIN_ITEMS = [{ id: 'users', label: 'Users' }]
+const USER_ITEMS = [{ id: 'profile', label: 'Profile' }]
 
 export default function Home() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
-  const items = user.role === ROLE.ADMIN ? ADMIN_ITEMS : []
+  const items = user.role === ROLE.ADMIN ? ADMIN_ITEMS : USER_ITEMS
   // /home/users -> 'users'; /home -> null
   const selectedId = location.pathname.split('/')[2] || null
 

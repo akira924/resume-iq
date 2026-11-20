@@ -490,6 +490,260 @@ button.small {
   color: var(--text-h);
 }
 
+/* Forms (Profile) */
+.profile {
+  max-width: 920px;
+  margin-inline: auto;
+  gap: 20px;
+}
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-section {
+  /* Field columns respond to the card's own width (sidebar or not), not the viewport. */
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: clamp(16px, 3vw, 28px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.list-heading {
+  margin: 4px 0 -8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+/* One column by default; widen when the card has room. */
+.form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px 20px;
+}
+
+@container (min-width: 480px) {
+  .form-grid.cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Three fields go three-across, or stack — never a 2 + 1 orphan. */
+@container (min-width: 620px) {
+  .form-grid.cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field label {
+  display: block;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  min-height: 44px;
+}
+
+select {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+input[readonly] {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.field.has-error input,
+.field.has-error select {
+  border-color: var(--error);
+}
+
+.required {
+  color: var(--error);
+}
+
+.field-hint {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Repeatable entries (experience, education, certifications) */
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.entries-empty {
+  padding: 16px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.entry {
+  min-width: 0; /* fieldsets default to min-content width, which breaks narrow layouts */
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.entry-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.entry-index {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.entry-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.entry-remove {
+  flex: none;
+  padding: 6px 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--error);
+}
+
+.entry > .form-grid {
+  padding: 16px;
+}
+
+.entry .field input {
+  background: var(--surface);
+}
+
+.add-button {
+  width: 100%;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--accent);
+}
+
+.add-button:hover {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+/* Save bar stays in reach while scrolling a long form. */
+.form-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 16px;
+  padding: 12px 0 max(12px, env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+
+.form-actions-status {
+  font-size: 14px;
+}
+
+.text-error {
+  color: var(--error);
+}
+
+.text-success {
+  color: #067647;
+}
+
+@media (prefers-color-scheme: dark) {
+  .text-success {
+    color: #75e0a7;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .form-actions-status {
+    flex-basis: 100%;
+    text-align: center;
+  }
+
+  .form-actions button[type='submit'] {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
 @media (max-width: 720px) {
   .layout {
     grid-template-columns: 1fr;

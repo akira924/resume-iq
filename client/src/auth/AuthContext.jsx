@@ -33,9 +33,12 @@ export function AuthProvider({ children }) {
     setUser(null)
   }, [])
 
+  // Replace the cached user after the server returns an updated copy (e.g. name change).
+  const updateUser = useCallback((next) => setUser(next), [])
+
   const value = useMemo(
-    () => ({ user, loading, login, register, logout }),
-    [user, loading, login, register, logout],
+    () => ({ user, loading, login, register, logout, updateUser }),
+    [user, loading, login, register, logout, updateUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -1,11 +1,12 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
-import { AdminRoute, GuestRoute, ProtectedRoute } from './auth/routes'
+import { AdminRoute, GuestRoute, ProtectedRoute, UserRoute } from './auth/routes'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
 import Welcome from './pages/Welcome'
 import Users from './pages/Users'
+import Profile from './pages/Profile'
 
 export default function App() {
   return (
@@ -22,6 +23,9 @@ export default function App() {
               <Route index element={<Welcome />} />
               <Route element={<AdminRoute />}>
                 <Route path="users" element={<Users />} />
+              </Route>
+              <Route element={<UserRoute />}>
+                <Route path="profile" element={<Profile />} />
               </Route>
             </Route>
           </Route>

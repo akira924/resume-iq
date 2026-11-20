@@ -26,6 +26,13 @@ export function AdminRoute() {
   return <Outlet />
 }
 
+// Only for regular users (role 0); admins are sent back to /home. Use inside ProtectedRoute.
+export function UserRoute() {
+  const { user } = useAuth()
+  if (user?.role !== ROLE.USER) return <Navigate to="/home" replace />
+  return <Outlet />
+}
+
 // Only for signed-out users (login/register); signed-in users go home.
 export function GuestRoute() {
   const { user, loading } = useAuth()
