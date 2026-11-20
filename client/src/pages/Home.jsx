@@ -7,7 +7,7 @@ const ADMIN_ITEMS = [{ id: 'users', label: 'Users' }]
 const USER_ITEMS = [{ id: 'profile', label: 'Profile' }]
 
 export default function Home() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -15,9 +15,10 @@ export default function Home() {
   // /home/users -> 'users'; /home -> null
   const selectedId = location.pathname.split('/')[2] || null
 
-  async function onLogout() {
-    await logout()
-    navigate('/login', { replace: true })
+  // Navigating (instead of logging out directly) lets the current page block it,
+  // e.g. Profile with unsaved changes.
+  function onLogout() {
+    navigate('/logout')
   }
 
   return (
