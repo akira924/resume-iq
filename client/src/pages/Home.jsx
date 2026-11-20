@@ -7,6 +7,7 @@ const ADMIN_ITEMS = [{ id: 'users', label: 'Users' }]
 const USER_ITEMS = [
   { id: 'profile', label: 'Profile' },
   { id: 'ai-prompt', label: 'AI Prompt' },
+  { id: 'resume', label: 'Resume' },
 ]
 
 export default function Home() {

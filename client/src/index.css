@@ -907,3 +907,368 @@ button.danger-outline {
   color: var(--accent-text);
   font-weight: 600;
 }
+
+/* Resume builder: JSON | preview | customization */
+.rb-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: calc(100svh - 48px);
+  min-height: 560px;
+}
+
+.rb-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.rb-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(360px, 1.35fr) minmax(270px, 320px);
+  gap: 16px;
+}
+
+.rb-panel {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.rb-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.rb-panel-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.rb-panel-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.rb-json-input {
+  flex: 1;
+  min-height: 240px;
+  width: 100%;
+  resize: none;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: 12.5px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+  tab-size: 2;
+}
+
+.rb-json-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.rb-json-input.has-error {
+  border-color: var(--error);
+}
+
+.rb-preview {
+  padding: 16px 0 0;
+}
+
+.rb-preview > .rb-panel-header,
+.rb-preview > .alert {
+  margin-inline: 16px;
+}
+
+.rb-preview-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 12px 12px;
+}
+
+.pdf-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 816px; /* 8.5in at 96dpi */
+  margin-inline: auto;
+}
+
+.pdf-page {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12), 0 8px 24px -8px rgb(0 0 0 / 0.18);
+}
+
+.rb-customize {
+  overflow-y: auto;
+}
+
+.rb-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rb-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rb-group + .rb-group {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.rb-group-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.rb-group .segmented {
+  align-self: stretch;
+}
+
+.rb-group .segmented-item {
+  flex: 1;
+  padding-inline: 8px;
+}
+
+.rb-slider {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  font-size: 14px;
+}
+
+.rb-slider label {
+  font-weight: 500;
+}
+
+.rb-slider output {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rb-slider input {
+  grid-column: 1 / -1;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
+.rb-order {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rb-order li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 14px;
+}
+
+.rb-order-index {
+  width: 16px;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rb-order-label {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.rb-sizes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.rb-size {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rb-size-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rb-size-input input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+}
+
+.rb-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.rb-toggle input,
+.rb-choice input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.rb-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rb-choice {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.rb-choice:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--bg);
+}
+
+.rb-choice input {
+  margin-top: 2px;
+}
+
+.rb-choice > span {
+  display: flex;
+  flex-direction: column;
+}
+
+.rb-choice-label {
+  font-weight: 600;
+}
+
+.rb-swatches {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.rb-swatch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-h);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.rb-swatch[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.rb-swatch-dot {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25);
+}
+
+.rb-customize > .rb-controls > button {
+  align-self: flex-start;
+}
+
+/* Narrower screens: preview on top, then JSON and customization side by side, then stacked. */
+@media (max-width: 1280px) {
+  .rb-page {
+    height: auto;
+  }
+
+  .rb-body {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .rb-preview {
+    grid-column: 1 / -1;
+    order: -1;
+    height: 80svh;
+  }
+
+  .rb-json {
+    height: 70svh;
+  }
+
+  .rb-customize {
+    max-height: 70svh;
+  }
+}
+
+@media (max-width: 760px) {
+  .rb-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rb-preview {
+    height: 70svh;
+  }
+
+  .rb-json {
+    height: 60svh;
+  }
+
+  .rb-customize {
+    max-height: none;
+  }
+}
