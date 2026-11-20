@@ -766,3 +766,61 @@ input[readonly] {
     min-height: 0;
   }
 }
+
+/* Confirm dialog (native <dialog>) */
+.dialog {
+  width: min(520px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 24px 48px -12px rgb(0 0 0 / 0.35);
+}
+
+.dialog::backdrop {
+  background: rgb(15 13 20 / 0.45);
+}
+
+.dialog-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+}
+
+.dialog-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.dialog-body {
+  font-size: 15px;
+}
+
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+button.danger-outline {
+  background: transparent;
+  border-color: var(--error);
+  color: var(--error);
+}
+
+@media (max-width: 480px) {
+  .dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .dialog-actions button {
+    width: 100%;
+    min-height: 44px;
+  }
+}

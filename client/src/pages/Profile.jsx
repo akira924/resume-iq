@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useBlocker } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../auth/useAuth'
 import { SENIORITY_OPTIONS } from '../constants'
 import { Field, SelectField } from '../components/Field'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 // Repeatable entries. `fields` drive both rendering and the blank entry added by "Add".
 // `titleField` names the entry's card once filled in; `cols` is the widest grid it uses.
@@ -125,7 +127,14 @@ export default function Profile() {
 
   const dirty = useMemo(() => form && JSON.stringify(toPayload(form)) !== savedJson, [form, savedJson])
 
-  // Warn before closing/reloading the tab with unsaved edits.
+  // In-app navigation (sidebar, Back/Forward, Log out) with unsaved edits is paused
+  // and the unsaved-changes dialog is shown instead.
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      Boolean(dirty) && !saving && currentLocation.pathname !== nextLocation.pathname,
+  )
+
+  // Closing or reloading the tab can't show a custom dialog; the browser shows its own prompt.
   useEffect(() => {
     if (!dirty) return
     const onBeforeUnload = (e) => e.preventDefault()
@@ -135,12 +144,15 @@ export default function Profile() {
 
   // After a failed save, move focus to the first invalid field — once. `errors` also changes
   // while typing (each fixed field clears its error), and focus must not jump then.
+  // If the unsaved-changes dialog is open (failed "Save & leave"), wait until it closes:
+  // fields behind a modal dialog can't take focus.
   const focusFirstError = useRef(false)
+  const dialogOpen = blocker.state === 'blocked'
   useEffect(() => {
-    if (!focusFirstError.current) return
+    if (!focusFirstError.current || dialogOpen) return
     focusFirstError.current = false
     formRef.current?.querySelector('[aria-invalid="true"]')?.focus()
-  }, [errors])
+  }, [errors, dialogOpen])
 
   function clearError(path) {
     setErrors((e) => {
@@ -180,8 +192,8 @@ export default function Profile() {
     )
   }
 
-  async function onSubmit(e) {
-    e.preventDefault()
+  // Returns true when the profile was saved.
+  async function save() {
     setSaving(true)
     setMessage(null)
     try {
@@ -192,13 +204,27 @@ export default function Profile() {
       setErrors({})
       updateUser(data.user)
       setMessage({ type: 'success', text: 'Profile saved' })
+      return true
     } catch (err) {
       focusFirstError.current = true
       setErrors(err.data?.errors ?? {})
       setMessage({ type: 'error', text: err.message })
+      return false
     } finally {
       setSaving(false)
     }
+  }
+
+  function onSubmit(e) {
+    e.preventDefault()
+    save()
+  }
+
+  // "Save & leave" from the unsaved-changes dialog: continue only if the save worked;
+  // otherwise stay so the highlighted errors can be fixed.
+  async function saveAndLeave() {
+    if (await save()) blocker.proceed?.()
+    else blocker.reset?.()
   }
 
   if (loadError) {
@@ -390,6 +416,27 @@ export default function Profile() {
           {saving ? 'Saving…' : 'Save profile'}
         </button>
       </div>
+
+      <ConfirmDialog
+        open={dialogOpen}
+        title="Unsaved changes"
+        onCancel={() => blocker.reset?.()}
+        actions={
+          <>
+            <button type="button" className="secondary" onClick={() => blocker.reset?.()} disabled={saving}>
+              Stay on page
+            </button>
+            <button type="button" className="danger-outline" onClick={() => blocker.proceed?.()} disabled={saving}>
+              Discard changes
+            </button>
+            <button type="button" onClick={saveAndLeave} disabled={saving}>
+              {saving ? 'Saving…' : 'Save & leave'}
+            </button>
+          </>
+        }
+      >
+        <p>You have unsaved changes to your profile. If you leave now, they’ll be lost.</p>
+      </ConfirmDialog>
     </form>
   )
 }
