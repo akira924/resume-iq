@@ -1,5 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { pdf } from '@react-pdf/renderer'
+import CodeMirror from '@uiw/react-codemirror'
+import { json, jsonParseLinter } from '@codemirror/lang-json'
+import { linter, lintGutter } from '@codemirror/lint'
+import { EditorView } from '@codemirror/view'
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
+import { tags } from '@lezer/highlight'
 import ResumeDocument from '../resume/ResumeDocument'
 import PdfPreview from '../resume/PdfPreview'
 import { SAMPLE_RESUME } from '../resume/sampleResume'
@@ -21,6 +27,29 @@ const JSON_KEY = 'resumeBuilder.json'
 const SETTINGS_KEY = 'resumeBuilder.settings'
 const SAMPLE_TEXT = JSON.stringify(SAMPLE_RESUME, null, 2)
 const RENDER_DELAY_MS = 300
+
+// JSON editor: syntax highlighting + inline parse errors. Colors are the --json-* CSS
+// variables in index.css, so the editor follows the app's light/dark mode.
+const JSON_HIGHLIGHT = HighlightStyle.define([
+  { tag: tags.propertyName, color: 'var(--json-key)' },
+  { tag: tags.string, color: 'var(--json-string)' },
+  { tag: tags.number, color: 'var(--json-number)' },
+  { tag: [tags.bool, tags.null], color: 'var(--json-keyword)' },
+  { tag: [tags.separator, tags.squareBracket, tags.brace, tags.punctuation], color: 'var(--json-punct)' },
+])
+const EDITOR_EXTENSIONS = [
+  json(),
+  syntaxHighlighting(JSON_HIGHLIGHT),
+  linter(jsonParseLinter()),
+  lintGutter(),
+  EditorView.lineWrapping,
+]
+const EDITOR_SETUP = {
+  foldGutter: true,
+  highlightActiveLine: true,
+  autocompletion: false,
+  syntaxHighlighting: false, // replaced by JSON_HIGHLIGHT
+}
 
 // Storage is a convenience: it may be unavailable (private mode, blocked site data).
 function readStorage(key) {
@@ -340,6 +369,20 @@ export default function ResumeBuilder() {
     }
   }, [resume, settings])
 
+  // ARIA attributes belong on the editable element, not the editor's wrapper.
+  const hasJsonError = Boolean(parsed.error)
+  const editorExtensions = useMemo(
+    () => [
+      ...EDITOR_EXTENSIONS,
+      EditorView.contentAttributes.of({
+        'aria-label': 'Resume JSON',
+        'aria-invalid': String(hasJsonError),
+        ...(hasJsonError && { 'aria-describedby': 'rb-json-error' }),
+      }),
+    ],
+    [hasJsonError],
+  )
+
   const onPreviewError = useCallback((err) => setRenderError(err.message || 'Couldn’t show the preview.'), [])
 
   function download() {
@@ -386,17 +429,14 @@ export default function ResumeBuilder() {
               </button>
             </div>
           </div>
-          <label className="visually-hidden" htmlFor="rb-json-input">
-            Resume JSON
-          </label>
-          <textarea
-            id="rb-json-input"
-            className={`rb-json-input${parsed.error ? ' has-error' : ''}`}
+          <CodeMirror
+            className={`rb-json-editor${hasJsonError ? ' has-error' : ''}`}
             value={jsonText}
-            onChange={(e) => changeJson(e.target.value)}
-            spellCheck={false}
-            aria-invalid={Boolean(parsed.error)}
-            aria-describedby={parsed.error ? 'rb-json-error' : undefined}
+            onChange={changeJson}
+            extensions={editorExtensions}
+            basicSetup={EDITOR_SETUP}
+            theme="none"
+            height="100%"
           />
           {parsed.error && (
             <p id="rb-json-error" className="alert alert-error" role="alert">

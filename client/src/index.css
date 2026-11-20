@@ -11,6 +11,12 @@
   --error-bg: #fef3f2;
   --info: #175cd3;
   --info-bg: #eff8ff;
+  /* JSON editor syntax colors */
+  --json-key: #7c3aed;
+  --json-string: #067647;
+  --json-number: #b54708;
+  --json-keyword: #175cd3;
+  --json-punct: #6b6375;
 
   font: 16px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
   color-scheme: light dark;
@@ -32,6 +38,11 @@
     --error-bg: #3b1513;
     --info: #84caff;
     --info-bg: #102a43;
+    --json-key: #c4b5fd;
+    --json-string: #75e0a7;
+    --json-number: #fdb022;
+    --json-keyword: #84caff;
+    --json-punct: #9ca3af;
   }
 }
 
@@ -966,27 +977,95 @@ button.danger-outline {
   gap: 8px;
 }
 
-.rb-json-input {
+/* CodeMirror JSON editor (theme="none": all colors come from the tokens above). */
+.rb-json-editor {
   flex: 1;
   min-height: 240px;
-  width: 100%;
-  resize: none;
-  padding: 12px;
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg);
-  color: var(--text-h);
-  font: 12.5px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
-  tab-size: 2;
 }
 
-.rb-json-input:focus {
+.rb-json-editor:focus-within {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
 }
 
-.rb-json-input.has-error {
+.rb-json-editor.has-error {
   border-color: var(--error);
+}
+
+.rb-json-editor .cm-editor {
+  height: 100%;
+  background: transparent;
+  color: var(--text-h);
+  font-size: 12.5px;
+}
+
+.rb-json-editor .cm-editor.cm-focused {
+  outline: none;
+}
+
+.rb-json-editor .cm-scroller {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  line-height: 1.5;
+}
+
+.rb-json-editor .cm-content {
+  caret-color: var(--text-h);
+}
+
+.rb-json-editor .cm-cursor {
+  border-left-color: var(--text-h);
+}
+
+.rb-json-editor .cm-gutters {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.rb-json-editor .cm-activeLine {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.rb-json-editor .cm-activeLineGutter {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--text-h);
+}
+
+.rb-json-editor .cm-selectionBackground,
+.rb-json-editor .cm-focused .cm-selectionBackground,
+.rb-json-editor .cm-content ::selection {
+  background: color-mix(in srgb, var(--accent) 22%, transparent) !important;
+}
+
+.rb-json-editor .cm-matchingBracket {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.rb-json-editor .cm-foldPlaceholder {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.rb-json-editor .cm-tooltip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-h);
+}
+
+.rb-json-editor .cm-diagnostic-error {
+  border-left-color: var(--error);
+}
+
+.rb-json-editor .cm-lintRange-error {
+  background-image: none;
+  text-decoration: underline wavy var(--error);
+  text-underline-offset: 3px;
 }
 
 .rb-preview {
