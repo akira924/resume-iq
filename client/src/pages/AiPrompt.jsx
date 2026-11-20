@@ -1,32 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
-import { buildResumePrompt } from '../aiPrompt'
+import { buildCoverLetterPrompt, buildResumePrompt } from '../aiPrompt'
 
-// Shows the resume-generation prompt built from the signed-in user's saved profile.
-// An optional job description is appended at the end, ready to copy into an AI chat.
-export default function AiPrompt() {
-  const [profile, setProfile] = useState(null)
-  const [loadError, setLoadError] = useState('')
-  const [jobDescription, setJobDescription] = useState('')
+// A generated prompt with its own Copy button.
+function PromptBox({ id, title, description, prompt }) {
   const [copyStatus, setCopyStatus] = useState(null) // 'copied' | 'failed'
   const copyTimer = useRef(null)
 
-  useEffect(() => {
-    let cancelled = false
-    api('/profile')
-      .then(({ profile }) => !cancelled && setProfile(profile))
-      .catch((err) => !cancelled && setLoadError(err.message))
-    return () => {
-      cancelled = true
-      clearTimeout(copyTimer.current)
-    }
-  }, [])
-
-  const prompt = useMemo(
-    () => (profile ? buildResumePrompt(profile, jobDescription) : ''),
-    [profile, jobDescription],
-  )
+  useEffect(() => () => clearTimeout(copyTimer.current), [])
 
   async function copy() {
     try {
@@ -39,10 +21,59 @@ export default function AiPrompt() {
     copyTimer.current = setTimeout(() => setCopyStatus(null), 2500)
   }
 
+  return (
+    <section className="form-section" aria-labelledby={id}>
+      <div className="prompt-toolbar">
+        <div className="section-header">
+          <h2 id={id}>{title}</h2>
+          <p className="muted">{description}</p>
+        </div>
+        <div className="prompt-actions">
+          <span aria-live="polite" className="form-actions-status">
+            {copyStatus === 'copied' && <span className="text-success">Copied</span>}
+            {copyStatus === 'failed' && <span className="text-error">Couldn’t copy</span>}
+          </span>
+          <button type="button" onClick={copy}>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+      <pre className="prompt-text" tabIndex={0} aria-label={`${title} text`}>
+        {prompt}
+      </pre>
+    </section>
+  )
+}
+
+// Shows the resume and cover letter prompts built from the signed-in user's saved profile.
+// An optional job description is appended to the resume prompt, ready to copy into an AI chat.
+export default function AiPrompt() {
+  const [profile, setProfile] = useState(null)
+  const [loadError, setLoadError] = useState('')
+  const [jobDescription, setJobDescription] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    api('/profile')
+      .then(({ profile }) => !cancelled && setProfile(profile))
+      .catch((err) => !cancelled && setLoadError(err.message))
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const resumePrompt = useMemo(
+    () => (profile ? buildResumePrompt(profile, jobDescription) : ''),
+    [profile, jobDescription],
+  )
+  const coverLetterPrompt = useMemo(() => (profile ? buildCoverLetterPrompt(profile) : ''), [profile])
+
   const header = (
     <header className="page-header">
       <h1>AI Prompt</h1>
-      <p className="muted">A resume generation prompt built from your profile. Paste it into your AI assistant.</p>
+      <p className="muted">
+        Resume and cover letter prompts built from your profile. Paste them into your AI assistant.
+      </p>
     </header>
   )
 
@@ -86,7 +117,7 @@ export default function AiPrompt() {
       <section className="form-section" aria-labelledby="ap-jd">
         <div className="section-header">
           <h2 id="ap-jd">Job Description</h2>
-          <p className="muted">Optional — paste the posting and it’s added to the end of the prompt.</p>
+          <p className="muted">Optional — paste the posting and it’s added to the end of the resume prompt.</p>
         </div>
         <label className="visually-hidden" htmlFor="ap-jd-input">
           Job description
@@ -101,26 +132,19 @@ export default function AiPrompt() {
         />
       </section>
 
-      <section className="form-section" aria-labelledby="ap-prompt">
-        <div className="prompt-toolbar">
-          <div className="section-header">
-            <h2 id="ap-prompt">Prompt</h2>
-            <p className="muted">Updates from your saved profile.</p>
-          </div>
-          <div className="prompt-actions">
-            <span aria-live="polite" className="form-actions-status">
-              {copyStatus === 'copied' && <span className="text-success">Copied</span>}
-              {copyStatus === 'failed' && <span className="text-error">Couldn’t copy</span>}
-            </span>
-            <button type="button" onClick={copy}>
-              Copy prompt
-            </button>
-          </div>
-        </div>
-        <pre className="prompt-text" tabIndex={0} aria-label="Generated prompt">
-          {prompt}
-        </pre>
-      </section>
+      <PromptBox
+        id="ap-resume"
+        title="Resume Prompt"
+        description="Generates your resume as JSON from your saved profile."
+        prompt={resumePrompt}
+      />
+
+      <PromptBox
+        id="ap-cover"
+        title="Cover Letter Prompt"
+        description="Best used in the same chat, right after the resume, so it can draw on that evidence."
+        prompt={coverLetterPrompt}
+      />
     </section>
   )
 }

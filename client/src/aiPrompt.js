@@ -170,3 +170,41 @@ export function buildResumePrompt(profile, jobDescription = '') {
     .join('\n\n')
     .trimEnd()
 }
+
+// String.raw keeps the literal "\n" / "\n\n" sequences the model is told to emit.
+const coverLetterInstructions = (name) => String.raw`Generate a complete, professional cover letter body - greeting, paragraphs, and sign-off - as a single string with paragraphs separated by blank lines (\n\n).
+
+Required structure (exact order)
+Greeting line: Hi Hiring Manager,
+3-4 short body paragraphs anchored to the role.
+
+Candidate's full name: ${name}
+
+Sign-off block: Best regards, then a newline (\n) then the candidate's full name (e.g. Best regards,\n${name}).
+Use \n\n between the greeting, each body paragraph, and the sign-off block. Use a single \n only inside the sign-off, between Best regards, and the name.
+
+Focus on the role
+Anchor the letter to the specific role, company, and job description from the structured job context.
+Tie relevant experience and technical skills to what the posting asks for.
+Use concrete examples from the candidate profile and project evidence when available.
+Prioritize overlap between job requirements and the candidate's background.
+Do not pad with generic praise for the company.
+
+Tone and style
+Be concise, realistic, and polite.
+Write like a senior engineer in their own voice, not a marketing brochure.
+Sound natural and human. Avoid stiff, formulaic, or overly polished phrasing.
+Never use em dashes.
+Do not sound like AI-generated copy.
+Avoid buzzword stacks, empty superlatives (thrilled, passionate, perfect fit), vague claims, and repetitive sentence patterns.
+Prefer plain, direct sentences. One clear point per paragraph.
+
+Output rules
+Start with the greeting, end with the sign-off block. Do not include the candidate's contact details, address, the company address, or the date - those live in the template's letterhead.
+The sign-off name MUST be the candidate's actual full name from the profile (first + last). Do not use placeholders like [Name].
+Do not invent experience, skills, or metrics not supported by the project evidence.
+Keep the total length tight. Shorter is better when the fit is clear.`
+
+export function buildCoverLetterPrompt(profile) {
+  return coverLetterInstructions(clean(profile.name))
+}

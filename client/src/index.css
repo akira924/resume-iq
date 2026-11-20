@@ -876,3 +876,34 @@ button.danger-outline {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* Two-way switch (AI Prompt: resume / cover letter) */
+.segmented {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.segmented-item {
+  min-height: 36px;
+  padding: 6px 16px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.segmented-item:hover {
+  color: var(--text-h);
+}
+
+.segmented-item[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
