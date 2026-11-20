@@ -8,6 +8,7 @@ import Home from './pages/Home'
 import Welcome from './pages/Welcome'
 import Users from './pages/Users'
 import Profile from './pages/Profile'
+import AiPrompt from './pages/AiPrompt'
 
 // A data router (rather than <BrowserRouter>) is required for useBlocker,
 // which the Profile page uses to warn about unsaved changes before navigating away.
@@ -29,7 +30,13 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <Welcome /> },
           { element: <AdminRoute />, children: [{ path: 'users', element: <Users /> }] },
-          { element: <UserRoute />, children: [{ path: 'profile', element: <Profile /> }] },
+          {
+            element: <UserRoute />,
+            children: [
+              { path: 'profile', element: <Profile /> },
+              { path: 'ai-prompt', element: <AiPrompt /> },
+            ],
+          },
         ],
       },
     ],

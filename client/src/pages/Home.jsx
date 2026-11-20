@@ -4,7 +4,10 @@ import { ROLE, ROLE_LABELS } from '../constants'
 import Sidebar from '../components/Sidebar'
 
 const ADMIN_ITEMS = [{ id: 'users', label: 'Users' }]
-const USER_ITEMS = [{ id: 'profile', label: 'Profile' }]
+const USER_ITEMS = [
+  { id: 'profile', label: 'Profile' },
+  { id: 'ai-prompt', label: 'AI Prompt' },
+]
 
 export default function Home() {
   const { user } = useAuth()
