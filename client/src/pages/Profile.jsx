@@ -133,8 +133,12 @@ export default function Profile() {
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [dirty])
 
-  // After a failed save, move focus to the first invalid field.
+  // After a failed save, move focus to the first invalid field — once. `errors` also changes
+  // while typing (each fixed field clears its error), and focus must not jump then.
+  const focusFirstError = useRef(false)
   useEffect(() => {
+    if (!focusFirstError.current) return
+    focusFirstError.current = false
     formRef.current?.querySelector('[aria-invalid="true"]')?.focus()
   }, [errors])
 
@@ -189,6 +193,7 @@ export default function Profile() {
       updateUser(data.user)
       setMessage({ type: 'success', text: 'Profile saved' })
     } catch (err) {
+      focusFirstError.current = true
       setErrors(err.data?.errors ?? {})
       setMessage({ type: 'error', text: err.message })
     } finally {
