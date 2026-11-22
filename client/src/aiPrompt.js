@@ -114,10 +114,10 @@ const OUTPUT_FORMAT = `Return ONE JSON object with the following structure:
 }`
 
 const CONTENT_RULES = `JOB TITLES AND HEADLINE (non-negotiable)
-Every job title must be 2–4 words and common industry titles
+Every job title and headline must be 2–4 words and common industry titles
 - Job titles must be aligned with the job description
 - Job titles must follow a logical career progression and candidate's own seniority level.
-Headline must reflect job titles and be aligned with the job description
+- Headline must reflect job titles and be aligned with the job description
 
 "summary"
 - Must be 3–4 sentences.
