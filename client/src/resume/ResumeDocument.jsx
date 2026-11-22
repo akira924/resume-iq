@@ -91,12 +91,21 @@ function ItemLine({ items, justify, s }) {
   )
 }
 
-// The hybrid header's right column. react-pdf can't size a column to its text, so item widths
-// are estimated from character counts: items are packed greedily into lines that fit
-// `budget`, and the column is made as wide as the widest line.
+// react-pdf can't measure text before layout, so widths are estimated from character counts.
+const textWidth = (chars, fontSize) => chars * fontSize * 0.5 // roughly the average glyph width of these fonts
+const contentWidthOf = (settings) => 612 - 2 * 72 * settings.margins.horizontal // US Letter, in pt
+
+// Estimated width of `texts` laid out as one ItemLine (the "|" plus its margins between items).
+function itemLineWidth(texts, fontSize) {
+  const sepWidth = textWidth(1, fontSize) + 2 * fontSize * 0.55
+  return texts.reduce((w, t) => w + textWidth(t.length, fontSize), 0) + Math.max(0, texts.length - 1) * sepWidth
+}
+
+// The hybrid header's right column. react-pdf can't size a column to its text, so items are
+// packed greedily into lines that fit `budget`, and the column is made as wide as the widest line.
 const SEP = '  |  '
 function packContactLines(groups, fontSize, budget) {
-  const widthOf = (chars) => chars * fontSize * 0.5 // roughly the average glyph width of these fonts
+  const widthOf = (chars) => textWidth(chars, fontSize)
   const lines = []
   for (const items of groups) {
     let line = null
@@ -115,7 +124,7 @@ function packContactLines(groups, fontSize, budget) {
 }
 
 function HybridContact({ groups, settings, s }) {
-  const contentWidth = 612 - 2 * 72 * settings.margins.horizontal
+  const contentWidth = contentWidthOf(settings)
   const lines = packContactLines(groups, settings.fontSizes.body, contentWidth * 0.62)
   if (lines.length === 0) return null
   const widest = Math.max(...lines.map((l) => l.width))
@@ -164,13 +173,23 @@ function Header({ resume, settings, s }) {
     )
   }
 
+  // Contact and links share one line when the estimate says it fits (with a 5% safety
+  // margin so a borderline line doesn't wrap); otherwise each gets its own line.
   const justify = settings.headerAlign === 'center' ? 'center' : 'flex-start'
+  const allTexts = [...contact, ...resume.links.map((l) => displayUrl(l.url))]
+  const oneLine = itemLineWidth(allTexts, settings.fontSizes.body) <= contentWidthOf(settings) * 0.95
   return (
     <View style={[s.header, s.headerStacked]}>
       {nameBlock}
       <View style={s.contactBlock}>
-        <ItemLine items={contact} justify={justify} s={s} />
-        <ItemLine items={links} justify={justify} s={s} />
+        {oneLine ? (
+          <ItemLine items={[...contact, ...links]} justify={justify} s={s} />
+        ) : (
+          <>
+            <ItemLine items={contact} justify={justify} s={s} />
+            <ItemLine items={links} justify={justify} s={s} />
+          </>
+        )}
       </View>
     </View>
   )
