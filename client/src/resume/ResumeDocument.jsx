@@ -270,9 +270,10 @@ function Experience({ resume, settings, s }) {
         {job.usedSkills.join(', ')}
       </Text>
     )
-  // Each job is its heading, role description and "Key Contributions:" kept together with the
-  // first bullet, then the remaining bullets, with the last one kept together with the
-  // "Technologies:" line, so pages break between bullets but never strand a label.
+  // Each job is its heading kept together with its role description; then "Key Contributions:"
+  // kept together with the first bullet; then the remaining bullets, with the last one kept
+  // together with the "Technologies:" line. Pages may break between the role description and
+  // "Key Contributions:" and between bullets, but never strand a heading or a label.
   const blocks = resume.experience.flatMap((job, i) => {
     const [first, ...rest] = job.sentences
     const last = rest.pop()
@@ -280,17 +281,19 @@ function Experience({ resume, settings, s }) {
       <View key={`${i}-head`} style={i > 0 ? s.jobGap : undefined} wrap={false}>
         <EntryHeading job={job} layout={settings.entryLayout} s={s} />
         {job.roleDescription && <Text style={s.roleDescription}>{job.roleDescription}</Text>}
-        {first && (
-          <View style={s.bullets}>
-            <Text style={[s.bold, s.contributionsLabel]}>Key Contributions:</Text>
-            {bullet(first)}
-          </View>
-        )}
+        {!first && technologies(job)}
+      </View>
+    )
+    const contributions = first && (
+      <View key={`${i}-first`} style={s.bullets} wrap={false}>
+        <Text style={[s.bold, s.contributionsLabel]}>Key Contributions:</Text>
+        {bullet(first)}
         {!last && technologies(job)}
       </View>
     )
     return [
       head,
+      contributions,
       ...rest.map((sentence, j) => bullet(sentence, `${i}-${j}`)),
       last && (
         <View key={`${i}-tail`} wrap={false}>
