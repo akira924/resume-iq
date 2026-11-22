@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
 import { AdminRoute, GuestRoute, ProtectedRoute, UserRoute } from './auth/routes'
@@ -9,6 +10,9 @@ import Welcome from './pages/Welcome'
 import Users from './pages/Users'
 import Profile from './pages/Profile'
 import AiPrompt from './pages/AiPrompt'
+
+// The resume builder pulls in the PDF renderer, so it loads only when opened.
+const ResumeBuilder = lazy(() => import('./pages/ResumeBuilder'))
 
 // A data router (rather than <BrowserRouter>) is required for useBlocker,
 // which the Profile page uses to warn about unsaved changes before navigating away.
@@ -35,6 +39,14 @@ const router = createBrowserRouter([
             children: [
               { path: 'profile', element: <Profile /> },
               { path: 'ai-prompt', element: <AiPrompt /> },
+              {
+                path: 'resume',
+                element: (
+                  <Suspense fallback={<p className="muted">Loading…</p>}>
+                    <ResumeBuilder />
+                  </Suspense>
+                ),
+              },
             ],
           },
         ],

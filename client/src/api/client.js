@@ -6,9 +6,11 @@ export class ApiError extends Error {
   }
 }
 
-export async function api(path, { method = 'GET', body } = {}) {
+// `keepalive` lets a request finish after the page unloads (small bodies only).
+export async function api(path, { method = 'GET', body, keepalive = false } = {}) {
   const res = await fetch(`/api${path}`, {
     method,
+    keepalive,
     credentials: 'include',
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
