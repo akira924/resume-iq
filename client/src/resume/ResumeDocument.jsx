@@ -1,13 +1,19 @@
 // The resume as a react-pdf document: US Letter, laid out from `settings`.
 // `resume` is the output of normalizeResume(); `settings` of normalizeSettings().
-import { Children, Fragment } from 'react'
+import { Children } from 'react'
 import { Document, Link, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import './fonts'
-import { COLOR_THEMES, ENTRY_LAYOUTS, SECTIONS } from './options'
+import { CONTACT_ICONS, linkIcon } from './iconData'
+import { Icon } from './icons'
+import { charWidthOf, ENTRY_LAYOUTS, SECTIONS, themeColors } from './options'
 
 const TEXT = '#222222'
 const MUTED = '#4a4a4a'
-const RULE = '#9aa0a6'
+const SEPARATOR = '#9aa0a6' // neutral gray for the header's "|" separators, whatever the theme
+// Header contact line proportions, as fractions of the body font size.
+const ICON_SCALE = 0.95 // icon size
+const ICON_GAP = 0.35 // space between an icon and its text
+const SEP_MARGIN = 0.55 // space on each side of the "|" separator
 
 // "https://www.linkedin.com/in/alex/" -> "linkedin.com/in/alex"
 const displayUrl = (url) => url.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '')
@@ -16,7 +22,7 @@ const joinWith = (sep, parts) => parts.filter(Boolean).join(sep)
 
 function makeStyles(settings) {
   const { fontSizes: fs, margins } = settings
-  const accent = (COLOR_THEMES.find((t) => t.value === settings.theme) ?? COLOR_THEMES[0]).color
+  const { accent, rule } = themeColors(settings.theme)
   const center = settings.headerAlign === 'center'
   const gap = fs.body * 0.45
 
@@ -33,14 +39,14 @@ function makeStyles(settings) {
     headerHybrid: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16 },
     headerName: { flex: 1 },
     headerSide: { flexShrink: 0, gap: 1 },
-    rightLine: { color: MUTED, textAlign: 'right' },
     headerStacked: center ? { alignItems: 'center', textAlign: 'center' } : {},
     contactBlock: { alignSelf: 'stretch', marginTop: 2, gap: 1 },
     name: { fontSize: fs.name, fontWeight: 700, color: accent, lineHeight: 1.15 },
     headline: { fontSize: fs.headline, color: MUTED, marginTop: 2 },
     itemLine: { flexDirection: 'row', flexWrap: 'wrap' },
-    item: { flexDirection: 'row' },
-    itemSep: { color: RULE, marginHorizontal: fs.body * 0.55 },
+    item: { flexDirection: 'row', alignItems: 'center' },
+    itemSep: { color: SEPARATOR, marginHorizontal: fs.body * SEP_MARGIN },
+    icon: { marginRight: fs.body * ICON_GAP },
     link: { color: MUTED, textDecoration: 'none' },
 
     section: { marginTop: fs.body * 0.7 },
@@ -53,7 +59,7 @@ function makeStyles(settings) {
       textAlign: settings.sectionTitleAlign,
       paddingBottom: 2,
       marginBottom: gap,
-      ...(settings.showBorders && { borderBottomWidth: 0.75, borderBottomColor: RULE }),
+      ...(settings.showBorders && { borderBottomWidth: 0.75, borderBottomColor: rule }),
     },
 
     entry: { marginBottom: gap * 1.4 },
@@ -77,43 +83,61 @@ function makeStyles(settings) {
 }
 
 // A line of "a  |  b  |  c" that wraps between items, never inside one.
-function ItemLine({ items, justify, s }) {
+// Each item is { text, node, icon }; icons are drawn only when `icons` ({ size, color }) is given.
+function ItemLine({ items, justify, icons, s }) {
   if (items.length === 0) return null
   return (
     <View style={[s.itemLine, { justifyContent: justify }]}>
       {items.map((item, i) => (
         <View key={i} style={s.item}>
           {i > 0 && <Text style={s.itemSep}>|</Text>}
-          <Text style={s.muted}>{item}</Text>
+          {icons && <Icon icon={item.icon} size={icons.size} color={icons.color} style={s.icon} />}
+          <Text style={s.muted}>{item.node}</Text>
         </View>
       ))}
     </View>
   )
 }
 
-// react-pdf can't measure text before layout, so widths are estimated from character counts.
-const textWidth = (chars, fontSize) => chars * fontSize * 0.5 // roughly the average glyph width of these fonts
+// react-pdf can't measure text before layout, so widths are estimated from character counts
+// and the chosen font's measured average glyph width (see FONT_FAMILIES in options.js).
+// `font` is { size, charWidth, iconWidth }; build it with fontMetrics().
+const fontMetrics = (settings) => {
+  const size = settings.fontSizes.body
+  return {
+    size,
+    charWidth: charWidthOf(settings.fontFamily),
+    iconWidth: settings.showContactIcons ? size * (ICON_SCALE + ICON_GAP) : 0,
+  }
+}
+const textWidth = (chars, font) => chars * font.size * font.charWidth
+const itemWidth = (item, font) => textWidth(item.text.length, font) + font.iconWidth
+const sepWidth = (font) => textWidth(1, font) + 2 * font.size * SEP_MARGIN
 const contentWidthOf = (settings) => 612 - 2 * 72 * settings.margins.horizontal // US Letter, in pt
 
-// Estimated width of `texts` laid out as one ItemLine (the "|" plus its margins between items).
-function itemLineWidth(texts, fontSize) {
-  const sepWidth = textWidth(1, fontSize) + 2 * fontSize * 0.55
-  return texts.reduce((w, t) => w + textWidth(t.length, fontSize), 0) + Math.max(0, texts.length - 1) * sepWidth
+// Icon size and color for ItemLine, or null when icons are turned off. Icons match the contact
+// text color rather than the theme, so the header stays neutral.
+const contactIcons = (settings) =>
+  settings.showContactIcons
+    ? { size: settings.fontSizes.body * ICON_SCALE, color: MUTED }
+    : null
+
+// Estimated width of `items` laid out as one ItemLine.
+function itemLineWidth(items, font) {
+  return items.reduce((w, it) => w + itemWidth(it, font), 0) + Math.max(0, items.length - 1) * sepWidth(font)
 }
 
 // The hybrid header's right column. react-pdf can't size a column to its text, so items are
 // packed greedily into lines that fit `budget`, and the column is made as wide as the widest line.
-const SEP = '  |  '
-function packContactLines(groups, fontSize, budget) {
-  const widthOf = (chars) => textWidth(chars, fontSize)
+function packContactLines(groups, font, budget) {
   const lines = []
   for (const items of groups) {
     let line = null
     for (const item of items) {
-      const w = widthOf(item.text.length)
-      if (line && line.width + widthOf(SEP.length) + w <= budget) {
+      const w = itemWidth(item, font)
+      if (line && line.width + sepWidth(font) + w <= budget) {
         line.items.push(item)
-        line.width += widthOf(SEP.length) + w
+        line.width += sepWidth(font) + w
       } else {
         line = { items: [item], width: w }
         lines.push(line)
@@ -125,33 +149,39 @@ function packContactLines(groups, fontSize, budget) {
 
 function HybridContact({ groups, settings, s }) {
   const contentWidth = contentWidthOf(settings)
-  const lines = packContactLines(groups, settings.fontSizes.body, contentWidth * 0.62)
+  const lines = packContactLines(groups, fontMetrics(settings), contentWidth * 0.62)
   if (lines.length === 0) return null
   const widest = Math.max(...lines.map((l) => l.width))
   const width = Math.min(Math.max(widest * 1.05, contentWidth * 0.25), contentWidth * 0.65)
   return (
     <View style={[s.headerSide, { width }]}>
       {lines.map((line, i) => (
-        <Text key={i} style={s.rightLine}>
-          {line.items.map((item, j) => (
-            <Fragment key={j}>
-              {j > 0 && SEP}
-              {item.node}
-            </Fragment>
-          ))}
-        </Text>
+        <ItemLine key={i} items={line.items} justify="flex-end" icons={contactIcons(settings)} s={s} />
       ))}
     </View>
   )
 }
 
 function Header({ resume, settings, s }) {
-  const contact = [resume.email, resume.phone, resume.location].filter(Boolean)
-  const links = resume.links.map((l) => (
-    <Link key={l.key} src={href(l.url)} style={s.link}>
-      {displayUrl(l.url)}
-    </Link>
-  ))
+  const contact = [
+    { text: resume.email, icon: CONTACT_ICONS.email },
+    { text: resume.phone, icon: CONTACT_ICONS.phone },
+    { text: resume.location, icon: CONTACT_ICONS.location },
+  ]
+    .filter((c) => c.text)
+    .map((c) => ({ ...c, node: c.text }))
+  const links = resume.links.map((l) => {
+    const text = displayUrl(l.url)
+    return {
+      text,
+      icon: linkIcon(l.key, l.url),
+      node: (
+        <Link src={href(l.url)} style={s.link}>
+          {text}
+        </Link>
+      ),
+    }
+  })
 
   const nameBlock = (
     <>
@@ -161,35 +191,29 @@ function Header({ resume, settings, s }) {
   )
 
   if (settings.headerAlign === 'hybrid') {
-    const groups = [
-      contact.map((text) => ({ text, node: text })),
-      resume.links.map((l, i) => ({ text: displayUrl(l.url), node: links[i] })),
-    ]
     return (
       <View style={[s.header, s.headerHybrid]}>
         <View style={s.headerName}>{nameBlock}</View>
-        <HybridContact groups={groups} settings={settings} s={s} />
+        <HybridContact groups={[contact, links]} settings={settings} s={s} />
       </View>
     )
   }
 
   // Contact and links share one line when the estimate says it fits (with a 5% safety
-  // margin so a borderline line doesn't wrap); otherwise each gets its own line.
+  // margin so a borderline line doesn't wrap); otherwise each starts its own line. Lines are
+  // packed here rather than left to flex-wrap, so a wrapped line never starts with a "|".
   const justify = settings.headerAlign === 'center' ? 'center' : 'flex-start'
-  const allTexts = [...contact, ...resume.links.map((l) => displayUrl(l.url))]
-  const oneLine = itemLineWidth(allTexts, settings.fontSizes.body) <= contentWidthOf(settings) * 0.95
+  const font = fontMetrics(settings)
+  const budget = contentWidthOf(settings) * 0.95
+  const all = [...contact, ...links]
+  const lines = itemLineWidth(all, font) <= budget ? [{ items: all }] : packContactLines([contact, links], font, budget)
   return (
     <View style={[s.header, s.headerStacked]}>
       {nameBlock}
       <View style={s.contactBlock}>
-        {oneLine ? (
-          <ItemLine items={[...contact, ...links]} justify={justify} s={s} />
-        ) : (
-          <>
-            <ItemLine items={contact} justify={justify} s={s} />
-            <ItemLine items={links} justify={justify} s={s} />
-          </>
-        )}
+        {lines.map((line, i) => (
+          <ItemLine key={i} items={line.items} justify={justify} icons={contactIcons(settings)} s={s} />
+        ))}
       </View>
     </View>
   )

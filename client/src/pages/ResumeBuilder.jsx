@@ -14,6 +14,7 @@ import {
   DEFAULT_SETTINGS,
   ENTRY_LAYOUTS,
   FONT_FAMILIES,
+  FONT_GROUPS,
   FONT_SIZE_FIELDS,
   HEADER_ALIGNS,
   MARGIN_RANGE,
@@ -227,10 +228,14 @@ function Customization({ settings, setSettings }) {
         <div className="field">
           <label htmlFor="rb-font">Font family</label>
           <select id="rb-font" value={settings.fontFamily} onChange={(e) => update({ fontFamily: e.target.value })}>
-            {FONT_FAMILIES.map((f) => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
+            {FONT_GROUPS.map((group) => (
+              <optgroup key={group} label={group}>
+                {FONT_FAMILIES.filter((f) => f.group === group).map((f) => (
+                  <option key={f.value} value={f.value}>
+                    {f.label}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>
@@ -259,6 +264,15 @@ function Customization({ settings, setSettings }) {
         {settings.headerAlign === 'hybrid' && (
           <p className="field-hint">Name and headline on the left, contact details on the right.</p>
         )}
+        <label className="rb-toggle">
+          <input
+            type="checkbox"
+            role="switch"
+            checked={settings.showContactIcons}
+            onChange={(e) => update({ showContactIcons: e.target.checked })}
+          />
+          Icons for contact details and links
+        </label>
       </ControlGroup>
 
       <ControlGroup title="Section titles">
