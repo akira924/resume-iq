@@ -9,6 +9,7 @@ import { tags } from '@lezer/highlight'
 import ResumeDocument from '../resume/ResumeDocument'
 import PdfPreview from '../resume/PdfPreview'
 import { SAMPLE_RESUME } from '../resume/sampleResume'
+import { useResumeSettings } from '../hooks/useResumeSettings'
 import {
   COLOR_THEMES,
   DEFAULT_SETTINGS,
@@ -25,7 +26,6 @@ import {
 } from '../resume/options'
 
 const JSON_KEY = 'resumeBuilder.json'
-const SETTINGS_KEY = 'resumeBuilder.settings'
 const SAMPLE_TEXT = JSON.stringify(SAMPLE_RESUME, null, 2)
 const RENDER_DELAY_MS = 300
 
@@ -74,14 +74,6 @@ function parseResume(text) {
     return { resume: normalizeResume(JSON.parse(text)) }
   } catch (err) {
     return { error: err instanceof SyntaxError ? `Invalid JSON: ${err.message}` : err.message }
-  }
-}
-
-function loadSettings() {
-  try {
-    return normalizeSettings(JSON.parse(readStorage(SETTINGS_KEY)))
-  } catch {
-    return normalizeSettings(DEFAULT_SETTINGS)
   }
 }
 
@@ -339,13 +331,37 @@ function Customization({ settings, setSettings }) {
   )
 }
 
+const SAVE_STATUS_TEXT = {
+  saving: 'Saving…',
+  saved: 'Saved',
+  'save-error': 'Couldn’t save',
+  'load-error': 'Not loaded',
+}
+
+// Autosave state for the customization panel, with a retry after a failure.
+function SaveStatus({ status, onRetry }) {
+  const failed = status === 'save-error' || status === 'load-error'
+  return (
+    <span className="rb-panel-actions">
+      <span className="muted" aria-live="polite">
+        {SAVE_STATUS_TEXT[status] ?? ''}
+      </span>
+      {failed && (
+        <button type="button" className="secondary small" onClick={onRetry}>
+          Retry
+        </button>
+      )}
+    </span>
+  )
+}
+
 // Resume builder: paste resume JSON, customize the layout, preview and download the PDF.
 export default function ResumeBuilder() {
   const [jsonText, setJsonText] = useState(() => readStorage(JSON_KEY) ?? SAMPLE_TEXT)
   const [parsed, setParsed] = useState(() => parseResume(jsonText))
   // The last valid resume keeps the preview up while the JSON is mid-edit.
   const [resume, setResume] = useState(() => parsed.resume ?? parseResume(SAMPLE_TEXT).resume)
-  const [settings, setSettings] = useState(loadSettings)
+  const { settings, setSettings, status: settingsStatus, retry: retrySettings } = useResumeSettings()
   const [blob, setBlob] = useState(null)
   const [renderError, setRenderError] = useState('')
   const [rendering, setRendering] = useState(true)
@@ -358,10 +374,11 @@ export default function ResumeBuilder() {
   }
 
   useEffect(() => writeStorage(JSON_KEY, jsonText), [jsonText])
-  useEffect(() => writeStorage(SETTINGS_KEY, JSON.stringify(settings)), [settings])
 
   // Rebuild the PDF shortly after the last change, not on every keystroke.
+  // Waits for the saved settings so the preview doesn't flash the defaults first.
   useEffect(() => {
+    if (!settings) return
     let cancelled = false
     const timer = setTimeout(async () => {
       setRendering(true)
@@ -479,8 +496,18 @@ export default function ResumeBuilder() {
         <section className="rb-panel rb-customize" aria-labelledby="rb-customize-title">
           <div className="rb-panel-header">
             <h2 id="rb-customize-title">Customize</h2>
+            <SaveStatus status={settingsStatus} onRetry={retrySettings} />
           </div>
-          <Customization settings={settings} setSettings={setSettings} />
+          {settingsStatus === 'load-error' && (
+            <p className="alert alert-error" role="alert">
+              Couldn’t load your saved customization. Changes made now won’t be saved.
+            </p>
+          )}
+          {settings ? (
+            <Customization settings={settings} setSettings={setSettings} />
+          ) : (
+            <p className="muted">Loading…</p>
+          )}
         </section>
       </div>
     </section>
