@@ -65,7 +65,10 @@ function makeStyles(settings) {
     accentBold: { fontWeight: 700, color: accent },
     muted: { color: MUTED },
 
+    roleDescription: { marginTop: gap * 0.6 },
     bullets: { marginTop: gap * 0.6 },
+    contributionsLabel: { marginBottom: 1.5 },
+    technologies: { marginTop: gap * 0.4 },
     bullet: { flexDirection: 'row', marginBottom: 1.5 },
     bulletMark: { width: fs.body * 1.1, paddingLeft: fs.body * 0.25 },
     bulletText: { flex: 1 },
@@ -260,17 +263,42 @@ function Experience({ resume, settings, s }) {
       <Text style={s.bulletText}>{sentence}</Text>
     </View>
   )
-  // Each job is its heading kept together with its first bullet, then the remaining bullets,
-  // so pages break between bullets but never right after a job heading.
+  const technologies = (job) =>
+    job.usedSkills.length > 0 && (
+      <Text style={s.technologies}>
+        <Text style={s.bold}>Technologies: </Text>
+        {job.usedSkills.join(', ')}
+      </Text>
+    )
+  // Each job is its heading, role description and "Key Contributions:" kept together with the
+  // first bullet, then the remaining bullets, with the last one kept together with the
+  // "Technologies:" line, so pages break between bullets but never strand a label.
   const blocks = resume.experience.flatMap((job, i) => {
     const [first, ...rest] = job.sentences
-    return [
+    const last = rest.pop()
+    const head = (
       <View key={`${i}-head`} style={i > 0 ? s.jobGap : undefined} wrap={false}>
         <EntryHeading job={job} layout={settings.entryLayout} s={s} />
-        {first && <View style={s.bullets}>{bullet(first)}</View>}
-      </View>,
+        {job.roleDescription && <Text style={s.roleDescription}>{job.roleDescription}</Text>}
+        {first && (
+          <View style={s.bullets}>
+            <Text style={[s.bold, s.contributionsLabel]}>Key Contributions:</Text>
+            {bullet(first)}
+          </View>
+        )}
+        {!last && technologies(job)}
+      </View>
+    )
+    return [
+      head,
       ...rest.map((sentence, j) => bullet(sentence, `${i}-${j}`)),
-    ]
+      last && (
+        <View key={`${i}-tail`} wrap={false}>
+          {bullet(last)}
+          {technologies(job)}
+        </View>
+      ),
+    ].filter(Boolean)
   })
   return (
     <Section title={SECTIONS.experience} s={s}>

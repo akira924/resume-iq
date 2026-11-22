@@ -133,7 +133,9 @@ export function normalizeResume(data) {
       location: str(e?.location),
       title: str(e?.title),
       period: str(e?.period),
+      roleDescription: str(e?.role_description),
       sentences: list(e?.sentences).map(str).filter(Boolean),
+      usedSkills: list(e?.used_skills).map(str).filter(Boolean),
     })),
     education: list(data.education).map((e) => ({
       institution: str(e?.institution),
