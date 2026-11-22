@@ -14,6 +14,7 @@ const SEPARATOR = '#9aa0a6' // neutral gray for the header's "|" separators, wha
 const ICON_SCALE = 0.95 // icon size
 const ICON_GAP = 0.35 // space between an icon and its text
 const SEP_MARGIN = 0.55 // space on each side of the "|" separator
+const ICON_ITEM_GAP = 1.2 // space between items when icons replace the "|" separators
 
 // "https://www.linkedin.com/in/alex/" -> "linkedin.com/in/alex"
 const displayUrl = (url) => url.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '')
@@ -46,6 +47,7 @@ function makeStyles(settings) {
     itemLine: { flexDirection: 'row', flexWrap: 'wrap' },
     item: { flexDirection: 'row', alignItems: 'center' },
     itemSep: { color: SEPARATOR, marginHorizontal: fs.body * SEP_MARGIN },
+    itemIconGap: { marginLeft: fs.body * ICON_ITEM_GAP },
     icon: { marginRight: fs.body * ICON_GAP },
     link: { color: MUTED, textDecoration: 'none' },
 
@@ -83,14 +85,15 @@ function makeStyles(settings) {
 }
 
 // A line of "a  |  b  |  c" that wraps between items, never inside one.
-// Each item is { text, node, icon }; icons are drawn only when `icons` ({ size, color }) is given.
+// Each item is { text, node, icon }; icons are drawn only when `icons` ({ size, color }) is given,
+// and then the icons set the items apart, so a plain gap replaces the "|" separators.
 function ItemLine({ items, justify, icons, s }) {
   if (items.length === 0) return null
   return (
     <View style={[s.itemLine, { justifyContent: justify }]}>
       {items.map((item, i) => (
-        <View key={i} style={s.item}>
-          {i > 0 && <Text style={s.itemSep}>|</Text>}
+        <View key={i} style={[s.item, i > 0 && icons && s.itemIconGap]}>
+          {i > 0 && !icons && <Text style={s.itemSep}>|</Text>}
           {icons && <Icon icon={item.icon} size={icons.size} color={icons.color} style={s.icon} />}
           <Text style={s.muted}>{item.node}</Text>
         </View>
@@ -112,7 +115,9 @@ const fontMetrics = (settings) => {
 }
 const textWidth = (chars, font) => chars * font.size * font.charWidth
 const itemWidth = (item, font) => textWidth(item.text.length, font) + font.iconWidth
-const sepWidth = (font) => textWidth(1, font) + 2 * font.size * SEP_MARGIN
+// Space between two items: the icon gap when icons are on, otherwise the "|" and its margins.
+const sepWidth = (font) =>
+  font.iconWidth ? font.size * ICON_ITEM_GAP : textWidth(1, font) + 2 * font.size * SEP_MARGIN
 const contentWidthOf = (settings) => 612 - 2 * 72 * settings.margins.horizontal // US Letter, in pt
 
 // Icon size and color for ItemLine, or null when icons are turned off. Icons match the contact
