@@ -36,7 +36,7 @@ function makeStyles(settings) {
       color: TEXT,
     },
     header: { marginBottom: fs.body * 0.6 },
-    headerHybrid: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16 },
+    headerHybrid: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 },
     headerName: { flex: 1 },
     headerSide: { flexShrink: 0, gap: 1 },
     headerStacked: center ? { alignItems: 'center', textAlign: 'center' } : {},
@@ -127,8 +127,7 @@ function itemLineWidth(items, font) {
   return items.reduce((w, it) => w + itemWidth(it, font), 0) + Math.max(0, items.length - 1) * sepWidth(font)
 }
 
-// The hybrid header's right column. react-pdf can't size a column to its text, so items are
-// packed greedily into lines that fit `budget`, and the column is made as wide as the widest line.
+// Packs each group's items greedily into lines that fit `budget`; a group always starts a new line.
 function packContactLines(groups, font, budget) {
   const lines = []
   for (const items of groups) {
@@ -147,16 +146,19 @@ function packContactLines(groups, font, budget) {
   return lines
 }
 
-function HybridContact({ groups, settings, s }) {
+// The hybrid header's right column: one contact detail or link per line, right-aligned.
+// react-pdf can't size a column to its text, so the column is made as wide as the widest
+// estimated item (plus a 5% safety margin), within 25–65% of the content width.
+function HybridContact({ items, settings, s }) {
+  if (items.length === 0) return null
   const contentWidth = contentWidthOf(settings)
-  const lines = packContactLines(groups, fontMetrics(settings), contentWidth * 0.62)
-  if (lines.length === 0) return null
-  const widest = Math.max(...lines.map((l) => l.width))
+  const font = fontMetrics(settings)
+  const widest = Math.max(...items.map((item) => itemWidth(item, font)))
   const width = Math.min(Math.max(widest * 1.05, contentWidth * 0.25), contentWidth * 0.65)
   return (
     <View style={[s.headerSide, { width }]}>
-      {lines.map((line, i) => (
-        <ItemLine key={i} items={line.items} justify="flex-end" icons={contactIcons(settings)} s={s} />
+      {items.map((item, i) => (
+        <ItemLine key={i} items={[item]} justify="flex-end" icons={contactIcons(settings)} s={s} />
       ))}
     </View>
   )
@@ -194,7 +196,7 @@ function Header({ resume, settings, s }) {
     return (
       <View style={[s.header, s.headerHybrid]}>
         <View style={s.headerName}>{nameBlock}</View>
-        <HybridContact groups={[contact, links]} settings={settings} s={s} />
+        <HybridContact items={[...contact, ...links]} settings={settings} s={s} />
       </View>
     )
   }
