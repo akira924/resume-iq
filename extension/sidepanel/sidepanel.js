@@ -1,6 +1,14 @@
 import { APP_URL } from '../lib/config.js'
 import { api } from '../lib/api.js'
 import { getCurrentUser, login, logout, onSessionChange } from '../lib/auth.js'
+import {
+  chooseDownloadFolder,
+  ensureWriteAccess,
+  fileExists,
+  folderNameFor,
+  getDownloadFolder,
+  saveToFolder,
+} from '../lib/downloadFolder.js'
 
 const $ = (id) => document.getElementById(id)
 const views = ['loading', 'error', 'login', 'home']
@@ -60,35 +68,128 @@ async function readClipboard() {
   }
 }
 
-function downloadBlob(blob, fileName) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = fileName
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(url), 10_000)
+// ---- Download folder ----
+
+function renderFolder(handle) {
+  const el = $('folder-name')
+  el.textContent = handle ? handle.name : 'Not set'
+  el.title = handle ? handle.name : ''
+  el.classList.toggle('unset', !handle)
 }
 
+getDownloadFolder().then(renderFolder)
+
+$('choose-folder').addEventListener('click', async () => {
+  try {
+    const handle = await chooseDownloadFolder()
+    if (handle) renderFolder(handle)
+  } catch (err) {
+    setDocStatus(err.message || 'Could not set the download folder.', { error: true })
+  }
+})
+
+// An error shown as a browser alert (not just in the status line), for problems the user
+// must act on before the PDF can be saved.
+class AlertError extends Error {}
+
+// Each parser returns the PDF parts plus `companyTarget`; `render` turns those parts into a blob.
 // Resume: the clipboard must hold valid resume JSON.
-async function generateResume(pdf, { settings }, text) {
-  const { resume, error } = pdf.parseResumeText(text)
-  if (error) throw new Error(error)
-  const fileName = pdf.resumeFileName(resume.name)
-  downloadBlob(await pdf.renderResumePdf(resume, settings), fileName)
-  return fileName
-}
-
 // Cover letter: the clipboard must hold cover letter JSON with a "cover_letter" text.
 // Header fields the AI left blank come from the profile.
-async function generateCoverLetter(pdf, { settings, profile }, text) {
-  const { header, body, error } = pdf.parseCoverLetterText(text, profile)
-  if (error) throw new Error(error)
-  const fileName = pdf.coverLetterFileName(header.name)
-  downloadBlob(await pdf.renderCoverLetterPdf(header, body, settings), fileName)
-  return fileName
+const GENERATORS = {
+  resume: {
+    label: 'resume',
+    parse: (pdf, _data, text) => pdf.parseResumeText(text),
+    fileName: (pdf, parsed) => pdf.resumeFileName(parsed.resume.name),
+    render: (pdf, { settings }, parsed) => pdf.renderResumePdf(parsed.resume, settings),
+  },
+  'cover-letter': {
+    label: 'cover letter',
+    parse: (pdf, { profile }, text) => pdf.parseCoverLetterText(text, profile),
+    fileName: (pdf, parsed) => pdf.coverLetterFileName(parsed.header.name),
+    render: (pdf, { settings }, parsed) => pdf.renderCoverLetterPdf(parsed.header, parsed.body, settings),
+  },
 }
 
-const GENERATORS = { resume: generateResume, 'cover-letter': generateCoverLetter }
+const isUnknownCompany = (name) => !name || /^unknown$/i.test(name)
+
+// Raised when the user cancels; the click ends quietly.
+class CancelledError extends Error {}
+
+// Asks for the company name in a dialog. -> the folder-safe name, or null when cancelled.
+function askCompanyName(label) {
+  const dialog = $('company-dialog')
+  const form = $('company-form')
+  const input = form.company
+  const errorEl = $('company-error')
+
+  $('company-dialog-text').textContent =
+    `The ${label} JSON doesn't name the company (company_target is missing or "Unknown"). ` +
+    'Enter it to choose the folder the PDF is saved in.'
+  form.reset()
+  errorEl.hidden = true
+
+  return new Promise((resolve) => {
+    const finish = (value) => {
+      form.removeEventListener('submit', onSubmit)
+      $('company-cancel').removeEventListener('click', onCancel)
+      dialog.removeEventListener('cancel', onCancel)
+      if (dialog.open) dialog.close()
+      resolve(value)
+    }
+    const onSubmit = (e) => {
+      e.preventDefault()
+      const name = folderNameFor(input.value)
+      if (isUnknownCompany(name)) {
+        errorEl.textContent = 'Enter a company name.'
+        errorEl.hidden = false
+        input.focus()
+        return
+      }
+      finish(name)
+    }
+    const onCancel = (e) => {
+      e.preventDefault() // Esc: close through finish() so the promise resolves
+      finish(null)
+    }
+    form.addEventListener('submit', onSubmit)
+    $('company-cancel').addEventListener('click', onCancel)
+    dialog.addEventListener('cancel', onCancel)
+    dialog.showModal()
+    input.focus()
+  })
+}
+
+// Renders the PDF and saves it to <download folder>/<company_target>/<file name>.
+// -> the saved path, relative to the download folder's parent.
+async function generate(kind, text) {
+  const gen = GENERATORS[kind]
+
+  const folder = await getDownloadFolder()
+  if (!folder) throw new AlertError('Choose a download folder first.')
+  if (!(await ensureWriteAccess(folder))) {
+    throw new AlertError(`ResumeIQ needs permission to save into "${folder.name}". Click the button again and allow it.`)
+  }
+
+  const [pdf, data] = await Promise.all([loadPdfModule(), getDocData()])
+  const parsed = gen.parse(pdf, data, text)
+  if (parsed.error) throw new Error(parsed.error)
+
+  let company = folderNameFor(parsed.companyTarget)
+  if (isUnknownCompany(company)) {
+    company = await askCompanyName(gen.label)
+    if (!company) throw new CancelledError()
+  }
+
+  const fileName = gen.fileName(pdf, parsed)
+  const path = `${folder.name}/${company}/${fileName}`
+  if (await fileExists(folder, company, fileName)) {
+    throw new AlertError(`${path} already exists. Delete or rename it first; it wasn't overwritten.`)
+  }
+
+  await saveToFolder(folder, company, fileName, await gen.render(pdf, data, parsed))
+  return path
+}
 
 let generating = false
 document.addEventListener('click', async (e) => {
@@ -102,11 +203,16 @@ document.addEventListener('click', async (e) => {
     // Read the clipboard first, while the click still counts as a user gesture.
     const text = await readClipboard()
     if (!text.trim()) throw new Error('The clipboard is empty.')
-    const [pdf, data] = await Promise.all([loadPdfModule(), getDocData()])
-    const fileName = await GENERATORS[button.dataset.generate](pdf, data, text)
-    setDocStatus(`Downloaded ${fileName}`)
+    const path = await generate(button.dataset.generate, text)
+    setDocStatus(`Saved ${path}`)
   } catch (err) {
-    setDocStatus(err.message || 'Could not generate the PDF.', { error: true })
+    if (err instanceof CancelledError) {
+      setDocStatus('Cancelled.')
+      return
+    }
+    const message = err.message || 'Could not generate the PDF.'
+    setDocStatus(message, { error: true })
+    if (err instanceof AlertError) alert(message)
   } finally {
     generating = false
     buttons.forEach((b) => (b.disabled = false))

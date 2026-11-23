@@ -147,6 +147,7 @@ Every job title and headline must be 2–4 words and common industry titles
 - Every sentence must be detailed, specific, aligned with the job description.
 - Every sentence must include technically rich descriptions of the role, specific contributions, and technologies used.
 - Every sentence must include ONLY technologies released before its company period.
+- Every skill in the skillset should appear in at least one bullet point. (the most recent such role first, required skills before preferred)
 
 "used_skills":
 Must be ONLY 4-12 technologies from that role's evidence line, the posting's terms first.

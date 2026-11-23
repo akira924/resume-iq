@@ -91,6 +91,53 @@ main {
   gap: 8px;
 }
 
+.folder-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.folder-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.folder-name {
+  font-weight: 600;
+  color: var(--text-h);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder-name.unset {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+dialog {
+  width: min(100% - 32px, 360px);
+  padding: 20px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.error-text {
+  color: var(--error);
+}
+
 #doc-status:empty {
   display: none;
 }

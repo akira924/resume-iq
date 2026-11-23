@@ -13,6 +13,18 @@ bundled from the client's resume code so the PDFs match the web app exactly.
 
 ## Downloading PDFs from the side panel
 
+First click **Choose…** next to *Download folder* and pick a folder. The panel keeps the folder
+handle in IndexedDB (File System Access API, see [lib/downloadFolder.js](lib/downloadFolder.js)), so the
+choice survives restarts. Chrome may ask again for write access after a restart; allow it.
+
+Each PDF is saved to `<download folder>/<company_target>/<file name>`. `company_target` comes from the
+JSON (both prompts ask for it), with characters that aren't allowed in folder names removed. When
+`company_target` is missing, blank or `Unknown`, a dialog asks for the company name (Cancel saves
+nothing). The panel shows an alert and saves nothing when:
+
+- no download folder is set, or write access was denied,
+- the file already exists in that company folder (it's never overwritten).
+
 Copy the AI's output, then click a button in the panel:
 
 - **Resume**: the clipboard must hold resume JSON (a ```json fence is fine). It's checked for a `personal_info.name` and some content, then saved as `Full_Name_Resume.pdf`.
@@ -45,6 +57,7 @@ Change `APP_URL` in [lib/config.js](lib/config.js). Then change `host_permission
 | `lib/themes.js` | Resume color themes (copy of `client/src/resume/options.js`) |
 | `lib/config.js` | App URL and the name of the session cookie |
 | `lib/api.js` | Fetch wrapper (mirrors `client/src/api/client.js`) |
+| `lib/downloadFolder.js` | Remembers the download folder and writes PDFs into its company subfolders |
 | `lib/auth.js` | `getCurrentUser`, `login`, `logout`, `onSessionChange` |
 | `sidepanel/` | Panel UI, including the PDF download buttons |
 | `sidepanel/vendor/` | Generated PDF generator (`client/src/resume/exportPdf.jsx`), not committed |

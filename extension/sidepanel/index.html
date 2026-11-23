@@ -49,8 +49,15 @@
             <h2>Download PDF</h2>
             <p class="muted small">
               Copy the resume JSON or the cover letter JSON from your AI chat, then click a button. The PDF uses
-              your resume customization.
+              your resume customization and is saved to <em>download folder / company_target /</em>.
             </p>
+          </div>
+          <div class="folder-row">
+            <div class="folder-text">
+              <div class="muted small">Download folder</div>
+              <div class="folder-name" id="folder-name">Not set</div>
+            </div>
+            <button type="button" class="secondary" id="choose-folder">Choose…</button>
           </div>
           <div class="button-row">
             <button type="button" data-generate="resume">Resume</button>
@@ -72,6 +79,22 @@
         </div>
       </section>
     </main>
+
+    <dialog id="company-dialog" aria-labelledby="company-dialog-title">
+      <form method="dialog" class="dialog-form" id="company-form" novalidate>
+        <h2 id="company-dialog-title">Company name</h2>
+        <p class="muted small" id="company-dialog-text"></p>
+        <label>
+          Company
+          <input type="text" name="company" autocomplete="off" required />
+        </label>
+        <p class="small error-text" id="company-error" role="alert" hidden></p>
+        <div class="button-row">
+          <button type="button" class="secondary" id="company-cancel">Cancel</button>
+          <button type="submit">Save PDF</button>
+        </div>
+      </form>
+    </dialog>
 
     <script type="module" src="sidepanel.js"></script>
   </body>

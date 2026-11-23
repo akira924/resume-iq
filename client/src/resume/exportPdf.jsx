@@ -15,8 +15,11 @@ const stripFence = (text) =>
     .replace(/\n?\s*```$/, '')
     .trim()
 
+// The "company_target" both prompts ask for, trimmed; '' when missing.
+const companyTarget = (data) => (typeof data.company_target === 'string' ? data.company_target.trim() : '')
+
 // Parses resume JSON copied from an AI chat.
-// -> { resume } (normalizeResume() output) or { error } (a message for the user)
+// -> { resume, companyTarget } (resume is normalizeResume() output) or { error } (a message for the user)
 export function parseResumeText(text) {
   let data
   try {
@@ -34,7 +37,7 @@ export function parseResumeText(text) {
   if (!resume.summary && resume.experience.length === 0 && resume.skillsets.length === 0) {
     return { error: 'The resume JSON has no summary, skills or experience.' }
   }
-  return { resume }
+  return { resume, companyTarget: companyTarget(data) }
 }
 
 // Only the non-blank string fields of `value`, so they can override defaults.
@@ -48,7 +51,7 @@ const filled = (value) =>
 // Parses cover letter JSON copied from an AI chat (the shape the cover letter prompt asks
 // for: personal_info, headline, online_presence, cover_letter). Header fields the AI left
 // blank are filled from `profile` (the GET /api/profile shape).
-// -> { header, body } or { error } (a message for the user)
+// -> { header, body, companyTarget } or { error } (a message for the user)
 export function parseCoverLetterText(text, profile) {
   let data
   try {
@@ -82,7 +85,7 @@ export function parseCoverLetterText(text, profile) {
   if (!header.name) {
     return { error: 'The cover letter JSON is missing personal_info.name.' }
   }
-  return { header, body }
+  return { header, body, companyTarget: companyTarget(data) }
 }
 
 // "Alex Q. Doe" -> "Alex_Q_Doe"
