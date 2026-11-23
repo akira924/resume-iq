@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "ResumeIQ",
+  "version": "0.1.0",
+  "description": "ResumeIQ in the browser side panel.",
+  "minimum_chrome_version": "116",
+  "action": {
+    "default_title": "Open ResumeIQ"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel/index.html"
+  },
+  "permissions": ["sidePanel", "cookies"],
+  "host_permissions": ["http://localhost/*"]
+}

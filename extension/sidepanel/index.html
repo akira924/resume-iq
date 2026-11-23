@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ResumeIQ</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <span class="brand">ResumeIQ</span>
+    </header>
+
+    <main>
+      <section id="view-loading" class="view center">
+        <p class="muted">Loading…</p>
+      </section>
+
+      <section id="view-error" class="view center" hidden>
+        <p class="alert alert-error" id="error-message"></p>
+        <button type="button" id="retry">Try again</button>
+      </section>
+
+      <section id="view-login" class="view" hidden>
+        <form class="card" id="login-form" novalidate>
+          <h1>Sign in</h1>
+          <p class="alert alert-error" id="login-error" role="alert" hidden></p>
+          <label>
+            Email
+            <input type="email" name="email" autocomplete="email" required />
+          </label>
+          <label>
+            Password
+            <input type="password" name="password" autocomplete="current-password" required />
+          </label>
+          <button type="submit" id="login-submit">Sign in</button>
+          <p class="muted">
+            No account? <a href="#" data-open="/register">Register</a>
+          </p>
+          <p class="muted small">
+            Signing in here also signs you in to the ResumeIQ website, and the other way round.
+          </p>
+        </form>
+      </section>
+
+      <section id="view-home" class="view" hidden>
+        <div class="card">
+          <div class="user">
+            <div class="avatar" id="user-initial" aria-hidden="true"></div>
+            <div class="user-text">
+              <div class="user-name" id="user-name"></div>
+              <div class="muted small" id="user-email"></div>
+            </div>
+          </div>
+          <button type="button" data-open="/home">Open ResumeIQ</button>
+          <button type="button" class="secondary" id="logout">Sign out</button>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="sidepanel.js"></script>
+  </body>
+</html>

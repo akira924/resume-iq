@@ -1,0 +1,191 @@
+/* Tokens mirror client/src/index.css so the panel matches the web app. */
+:root {
+  --text: #3f3b46;
+  --text-h: #0f0d14;
+  --muted: #6b6375;
+  --bg: #f6f5f8;
+  --surface: #fff;
+  --border: #e2e0e6;
+  --accent: #7c3aed;
+  --accent-text: #fff;
+  --error: #b42318;
+  --error-bg: #fef3f2;
+
+  font: 14px/1.5 system-ui, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #c9c6cf;
+    --text-h: #f3f4f6;
+    --muted: #9ca3af;
+    --bg: #121217;
+    --surface: #1c1c24;
+    --border: #2e2e3a;
+    --accent: #a78bfa;
+    --accent-text: #121217;
+    --error: #fda29b;
+    --error-bg: #3b1513;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.topbar {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.brand {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+main {
+  padding: 16px;
+}
+
+.view.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-top: 32px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+input {
+  font: inherit;
+  padding: 8px 10px;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+button {
+  font: inherit;
+  font-weight: 600;
+  padding: 9px 14px;
+  color: var(--accent-text);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button.secondary {
+  color: var(--text-h);
+  background: transparent;
+  border-color: var(--border);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+a {
+  color: var(--accent);
+}
+
+p {
+  margin: 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 12px;
+}
+
+.alert {
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.alert-error {
+  color: var(--error);
+  background: var(--error-bg);
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-weight: 700;
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+.user-text {
+  min-width: 0;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.user-name,
+#user-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
