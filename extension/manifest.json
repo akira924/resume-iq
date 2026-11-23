@@ -14,6 +14,13 @@
   "side_panel": {
     "default_path": "sidepanel/index.html"
   },
-  "permissions": ["sidePanel", "cookies"],
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*"],
+      "js": ["content/chatgpt.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": ["sidePanel", "cookies", "clipboardRead"],
   "host_permissions": ["http://localhost/*"]
 }

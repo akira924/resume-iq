@@ -27,7 +27,10 @@ Change `APP_URL` in [lib/config.js](lib/config.js). Then change `host_permission
 | Path | Purpose |
 | --- | --- |
 | `manifest.json` | MV3 manifest: side panel, permissions |
-| `background.js` | Makes a toolbar click open the side panel |
+| `background.js` | Makes a toolbar click open the side panel; builds the theme color and resume prompt for the content script |
+| `content/chatgpt.js` | Resume / Cover letter buttons above the ChatGPT input. Resume sends the prompt plus the job description from the clipboard |
+| `lib/aiPrompt.js`, `lib/constants.js` | Resume prompt builder (copy of `client/src/aiPrompt.js` and its constants) |
+| `lib/themes.js` | Resume color themes (copy of `client/src/resume/options.js`) |
 | `lib/config.js` | App URL and the name of the session cookie |
 | `lib/api.js` | Fetch wrapper (mirrors `client/src/api/client.js`) |
 | `lib/auth.js` | `getCurrentUser`, `login`, `logout`, `onSessionChange` |

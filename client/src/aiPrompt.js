@@ -67,6 +67,7 @@ function profileSection(p) {
 
 const OUTPUT_FORMAT = `Return ONE JSON object with the following structure:
 {
+  "company_target": "",
   "personal_info": {
     "name": "",
     "email": "",
@@ -79,7 +80,6 @@ const OUTPUT_FORMAT = `Return ONE JSON object with the following structure:
     "github": "",
     "website": ""
   },
-  "company_target": ""
   "summary": "",
   "skillsets": [
     {
