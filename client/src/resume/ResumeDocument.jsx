@@ -81,6 +81,7 @@ function makeStyles(settings) {
     bulletMark: { width: fs.body * 1.1, paddingLeft: fs.body * 0.25 },
     bulletText: { flex: 1 },
     skillLine: { marginBottom: 2 },
+    paragraph: { marginBottom: fs.body * 0.9 },
   })
 }
 
@@ -393,6 +394,34 @@ const SECTION_COMPONENTS = {
   experience: Experience,
   education: Education,
   certification: Certifications,
+}
+
+// A cover letter in the resume's style: the same header, then one "Cover Letter" section.
+// `header` is normalizeResume() output (only the name, contact and link fields are used);
+// `body` is the letter text, with paragraphs separated by blank lines.
+export function CoverLetterDocument({ header, body, settings }) {
+  const s = makeStyles(settings)
+  const paragraphs = body
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+  return (
+    <Document
+      title={header.name ? `${header.name} - Cover Letter` : 'Cover Letter'}
+      author={header.name || undefined}
+    >
+      <Page size="LETTER" style={s.page}>
+        <Header resume={header} settings={settings} s={s} />
+        <Section title="Cover Letter" s={s}>
+          {paragraphs.map((p, i) => (
+            <Text key={i} style={s.paragraph}>
+              {p}
+            </Text>
+          ))}
+        </Section>
+      </Page>
+    </Document>
+  )
 }
 
 export default function ResumeDocument({ resume, settings }) {

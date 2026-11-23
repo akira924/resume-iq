@@ -1,4 +1,5 @@
 import { APP_URL } from '../lib/config.js'
+import { api } from '../lib/api.js'
 import { getCurrentUser, login, logout, onSessionChange } from '../lib/auth.js'
 
 const $ = (id) => document.getElementById(id)
@@ -6,7 +7,111 @@ const views = ['loading', 'error', 'login', 'home']
 
 function show(view) {
   for (const v of views) $(`view-${v}`).hidden = v !== view
+  if (view === 'home') prefetchDocData()
 }
+
+// ---- PDF downloads ----
+
+// The PDF generator (react-pdf, the resume layout and fonts), built from the client by
+// `npm run build:extension`. It's large, so it's loaded once, when the home view shows.
+let pdfModule = null
+function loadPdfModule() {
+  pdfModule ??= import('./vendor/resume-pdf.js').catch((err) => {
+    console.error('Failed to load the PDF generator', err)
+    pdfModule = null
+    throw new Error('The PDF generator is missing. Run "npm run build:extension" in client/, then reload the extension.')
+  })
+  return pdfModule
+}
+
+// The signed-in user's resume customization and profile, prefetched so a click only has to
+// read the clipboard and render. Refetched every time the home view shows, so changes
+// made in the web app are picked up.
+let docData = null // Promise<{ settings, profile }>
+function prefetchDocData() {
+  loadPdfModule().catch(() => {}) // reported on click
+  docData = Promise.all([api('/resume-settings'), api('/profile')]).then(([s, p]) => ({
+    settings: s.settings, // null until saved once; the generator then uses the defaults
+    profile: p.profile,
+  }))
+  docData.catch(() => {}) // reported on click
+}
+
+async function getDocData() {
+  try {
+    return await (docData ?? Promise.reject(new Error()))
+  } catch {
+    prefetchDocData() // retry once on demand, e.g. after the server was briefly down
+    return docData
+  }
+}
+
+function setDocStatus(text, { error = false } = {}) {
+  const el = $('doc-status')
+  el.textContent = text
+  el.classList.toggle('error', error)
+}
+
+async function readClipboard() {
+  try {
+    return await navigator.clipboard.readText()
+  } catch {
+    throw new Error('Could not read the clipboard. Click inside this panel and try again.')
+  }
+}
+
+function downloadBlob(blob, fileName) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 10_000)
+}
+
+// Resume: the clipboard must hold valid resume JSON.
+async function generateResume(pdf, { settings }, text) {
+  const { resume, error } = pdf.parseResumeText(text)
+  if (error) throw new Error(error)
+  const fileName = pdf.resumeFileName(resume.name)
+  downloadBlob(await pdf.renderResumePdf(resume, settings), fileName)
+  return fileName
+}
+
+// Cover letter: the clipboard must hold cover letter JSON with a "cover_letter" text.
+// Header fields the AI left blank come from the profile.
+async function generateCoverLetter(pdf, { settings, profile }, text) {
+  const { header, body, error } = pdf.parseCoverLetterText(text, profile)
+  if (error) throw new Error(error)
+  const fileName = pdf.coverLetterFileName(header.name)
+  downloadBlob(await pdf.renderCoverLetterPdf(header, body, settings), fileName)
+  return fileName
+}
+
+const GENERATORS = { resume: generateResume, 'cover-letter': generateCoverLetter }
+
+let generating = false
+document.addEventListener('click', async (e) => {
+  const button = e.target.closest('[data-generate]')
+  if (!button || generating) return
+  generating = true
+  const buttons = document.querySelectorAll('[data-generate]')
+  buttons.forEach((b) => (b.disabled = true))
+  setDocStatus('Generating…')
+  try {
+    // Read the clipboard first, while the click still counts as a user gesture.
+    const text = await readClipboard()
+    if (!text.trim()) throw new Error('The clipboard is empty.')
+    const [pdf, data] = await Promise.all([loadPdfModule(), getDocData()])
+    const fileName = await GENERATORS[button.dataset.generate](pdf, data, text)
+    setDocStatus(`Downloaded ${fileName}`)
+  } catch (err) {
+    setDocStatus(err.message || 'Could not generate the PDF.', { error: true })
+  } finally {
+    generating = false
+    buttons.forEach((b) => (b.disabled = false))
+  }
+})
 
 function renderUser(user) {
   $('user-name').textContent = user.name

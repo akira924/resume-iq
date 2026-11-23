@@ -8,6 +8,7 @@ import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { tags } from '@lezer/highlight'
 import ResumeDocument from '../resume/ResumeDocument'
 import PdfPreview from '../resume/PdfPreview'
+import { resumeFileName } from '../resume/exportPdf'
 import { SAMPLE_RESUME } from '../resume/sampleResume'
 import { useResumeSettings } from '../hooks/useResumeSettings'
 import {
@@ -75,11 +76,6 @@ function parseResume(text) {
   } catch (err) {
     return { error: err instanceof SyntaxError ? `Invalid JSON: ${err.message}` : err.message }
   }
-}
-
-function fileName(resume) {
-  const base = resume?.name?.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_')
-  return `${base || 'Resume'}_Resume.pdf`
 }
 
 function Segmented({ label, options, value, onChange }) {
@@ -421,7 +417,7 @@ export default function ResumeBuilder() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = fileName(resume)
+    a.download = resumeFileName(resume?.name)
     a.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }

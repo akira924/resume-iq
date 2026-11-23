@@ -211,7 +211,26 @@ Output rules
 Start with the greeting, end with the sign-off block. Do not include the candidate's contact details, address, the company address, or the date - those live in the template's letterhead.
 The sign-off name MUST be the candidate's actual full name from the profile (first + last). Do not use placeholders like [Name].
 Do not invent experience, skills, or metrics not supported by the project evidence.
-Keep the total length tight. Shorter is better when the fit is clear.`
+Keep the total length tight. Shorter is better when the fit is clear.
+
+{
+  "company_target": "",
+  "personal_info": {
+    "name": "",
+    "email": "",
+    "phone": "",
+    "location": ""
+  },
+  "headline": "",
+  "online_presence": {
+    "linkedin": "",
+    "github": "",
+    "website": ""
+  },
+  "cover_letter": ""
+}
+
+Must be only one code block.`
 
 export function buildCoverLetterPrompt(profile) {
   return coverLetterInstructions(clean(profile.name))

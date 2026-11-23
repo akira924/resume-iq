@@ -43,7 +43,22 @@
         </form>
       </section>
 
-      <section id="view-home" class="view" hidden>
+      <section id="view-home" class="view stack" hidden>
+        <div class="card">
+          <div>
+            <h2>Download PDF</h2>
+            <p class="muted small">
+              Copy the resume JSON or the cover letter JSON from your AI chat, then click a button. The PDF uses
+              your resume customization.
+            </p>
+          </div>
+          <div class="button-row">
+            <button type="button" data-generate="resume">Resume</button>
+            <button type="button" data-generate="cover-letter">Cover letter</button>
+          </div>
+          <p class="small" id="doc-status" role="status" aria-live="polite"></p>
+        </div>
+
         <div class="card">
           <div class="user">
             <div class="avatar" id="user-initial" aria-hidden="true"></div>

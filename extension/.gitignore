@@ -1,0 +1,2 @@
+# PDF generator bundle, built from the client with `npm run build:extension`.
+sidepanel/vendor/

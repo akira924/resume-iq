@@ -1,13 +1,25 @@
 # ResumeIQ Chrome extension
 
 A Manifest V3 extension that opens ResumeIQ in Chrome's right-hand side panel.
-It's plain JavaScript and doesn't need a build step.
+It's plain JavaScript. The one built piece is the PDF generator in `sidepanel/vendor/`, which is
+bundled from the client's resume code so the PDFs match the web app exactly.
 
 ## Run it locally
 
 1. Start the server (`cd server && npm run dev`) and the client (`cd client && npm run dev`).
-2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick this `extension/` folder.
-3. Click the ResumeIQ toolbar icon. The side panel opens.
+2. Build the PDF generator: `cd client && npm run build:extension`. Run it again whenever the resume layout in `client/src/resume/` changes.
+3. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick this `extension/` folder.
+4. Click the ResumeIQ toolbar icon. The side panel opens.
+
+## Downloading PDFs from the side panel
+
+Copy the AI's output, then click a button in the panel:
+
+- **Resume**: the clipboard must hold resume JSON (a ```json fence is fine). It's checked for a `personal_info.name` and some content, then saved as `Full_Name_Resume.pdf`.
+- **Cover letter**: the clipboard must hold cover letter JSON (`personal_info`, `headline`, `online_presence`, `cover_letter`) with a non-empty `cover_letter`. The letter goes under a **Cover Letter** section, below a header from the JSON (blank fields are filled from your profile), and is saved as `Full_Name_Cover_Letter.pdf`.
+
+Both use your saved resume customization (font, sizes, margins, theme, header layout). The settings, profile and generator are loaded when the panel's home view opens.
+The generator needs WebAssembly, so `manifest.json` allows `'wasm-unsafe-eval'` for extension pages.
 
 ## How the session is shared
 
@@ -34,4 +46,5 @@ Change `APP_URL` in [lib/config.js](lib/config.js). Then change `host_permission
 | `lib/config.js` | App URL and the name of the session cookie |
 | `lib/api.js` | Fetch wrapper (mirrors `client/src/api/client.js`) |
 | `lib/auth.js` | `getCurrentUser`, `login`, `logout`, `onSessionChange` |
-| `sidepanel/` | Panel UI |
+| `sidepanel/` | Panel UI, including the PDF download buttons |
+| `sidepanel/vendor/` | Generated PDF generator (`client/src/resume/exportPdf.jsx`), not committed |
