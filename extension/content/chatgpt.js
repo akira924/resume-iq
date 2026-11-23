@@ -140,7 +140,7 @@
 
   const ACTION_HANDLERS = {
     resume: sendResumePrompt,
-    'cover-letter': () => log('action: cover-letter (not implemented yet)'),
+    'cover-letter': sendCoverLetterPrompt,
   }
 
   let busy = false
@@ -163,37 +163,44 @@
     }
   })
 
-  // ---- Resume action: prompt + clipboard job description, then send ----
+  // ---- Actions ----
 
+  // Resume: prompt + job description from the clipboard.
   async function sendResumePrompt() {
     setStatus('Preparing…', { sticky: true })
-    const t0 = performance.now()
-    const elapsed = () => `${Math.round(performance.now() - t0)} ms`
-
     // Read the clipboard first, while the click still counts as a user gesture.
     const jobDescription = (await readClipboard()).trim()
-    log(`clipboard read (${jobDescription.length} chars) at ${elapsed()}`)
     if (!jobDescription) {
       throw new Error('Clipboard is empty. Copy the job description first.')
     }
+    const prompt = await getPrompt('resumePrompt')
+    // The prefetched prompt ends with the "JOB DESCRIPTION" heading; the posting goes under it.
+    await sendPrompt(`${prompt}\n${jobDescription}`)
+  }
 
-    if (!context?.resumePrompt) {
-      await loadContext()
-      log(`prompt was not prefetched; loaded at ${elapsed()}`)
-    }
-    if (!context?.resumePrompt) throw new Error(context?.error || 'Could not load your ResumeIQ profile.')
+  // Cover letter: the prompt alone. It's meant to follow the resume prompt in the same
+  // chat, where ChatGPT already has the job description.
+  async function sendCoverLetterPrompt() {
+    setStatus('Preparing…', { sticky: true })
+    await sendPrompt(await getPrompt('coverLetterPrompt'))
+  }
 
+  // A prefetched prompt from the context, loading it now if the prefetch hadn't finished.
+  async function getPrompt(key) {
+    if (!context?.[key]) await loadContext()
+    if (!context?.[key]) throw new Error(context?.error || 'Could not load your ResumeIQ profile.')
+    return context[key]
+  }
+
+  // Puts `text` in ChatGPT's main input and presses Enter.
+  async function sendPrompt(text) {
     const input = findComposer()?.input
     if (!input) throw new Error('Could not find the ChatGPT input.')
     if (document.querySelector('[data-testid="stop-button"]')) {
       throw new Error('ChatGPT is still responding. Wait for it to finish, then try again.')
     }
-
-    // The prefetched prompt ends with the "JOB DESCRIPTION" heading; the posting goes under it.
-    setComposerText(input, `${context.resumePrompt}\n${jobDescription}`)
-    log(`text inserted at ${elapsed()}`)
+    setComposerText(input, text)
     await submit(input)
-    log(`done at ${elapsed()}`)
     setStatus('Sent.')
   }
 
@@ -331,7 +338,7 @@
 
   // ---- Prefetched data: theme color and resume prompt ----
 
-  // { accent, resumePrompt, error } from the background worker.
+  // { accent, resumePrompt, coverLetterPrompt, error } from the background worker.
   let context = null
 
   async function loadContext() {
