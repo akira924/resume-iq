@@ -79,6 +79,7 @@ const OUTPUT_FORMAT = `Return ONE JSON object with the following structure:
     "github": "",
     "website": ""
   },
+  "company_target": ""
   "summary": "",
   "skillsets": [
     {
@@ -113,7 +114,11 @@ const OUTPUT_FORMAT = `Return ONE JSON object with the following structure:
   ]
 }`
 
-const CONTENT_RULES = `JOB TITLES AND HEADLINE (non-negotiable)
+const CONTENT_RULES = `"company_target":
+- Must find the company name from the job description
+- If the company name is not mentioned in the job description, set company name to Unknown
+
+JOB TITLES AND HEADLINE (non-negotiable)
 Every job title and headline must be 2–4 words and common industry titles
 - Job titles must be aligned with the job description
 - Job titles must follow a logical career progression and candidate's own seniority level.

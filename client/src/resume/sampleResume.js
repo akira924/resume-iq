@@ -12,6 +12,7 @@ export const SAMPLE_RESUME = {
     github: 'https://github.com/alexmorgan',
     website: 'https://alexmorgan.dev',
   },
+  company_target: "Apple",
   summary:
     'Results-driven Full-Stack Software Engineer with 6+ years of experience designing, developing, and deploying scalable web applications. Proficient in React, Node.js, Python, and cloud technologies. Experienced in building RESTful APIs, optimizing application performance, designing database architectures, and collaborating with cross-functional teams to deliver high-quality software solutions.',
   skillsets: [
