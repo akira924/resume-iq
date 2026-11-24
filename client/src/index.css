@@ -888,6 +888,18 @@ button.danger-outline {
   overflow-wrap: anywhere;
 }
 
+.prompt-edit {
+  display: block;
+  width: 100%;
+  min-height: 240px;
+  resize: vertical;
+}
+
+.prompt-edit:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
 /* Two-way switch (AI Prompt: resume / cover letter) */
 .segmented {
   display: inline-flex;

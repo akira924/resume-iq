@@ -3,8 +3,40 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { buildCoverLetterPrompt, buildResumePrompt } from '../aiPrompt'
 
-// A generated prompt with its own Copy button.
-function PromptBox({ id, title, description, prompt }) {
+const QA_PROMPT_KEY = 'resumeiq.qaPrompt'
+
+const DEFAULT_QA_PROMPT = `I am filling in the online application form for the job below.
+
+For each question, write an answer that is (1) true to my background, (2) under the character limit I give, and (3) uses the ad's keywords where they fit naturally, within only one paragraph based on the job description and my resume generated.
+
+For yes/no knock-out questions, only answer "Yes" or "No".
+
+For asking only number of years of experience, only answer enough number.
+
+Write answers as a human candidate, so those answers are not flagged as an AI generated sentence.
+
+Use ", ', - instead of smart characters.`
+
+function loadQaPrompt() {
+  try {
+    return localStorage.getItem(QA_PROMPT_KEY) ?? DEFAULT_QA_PROMPT
+  } catch {
+    return DEFAULT_QA_PROMPT
+  }
+}
+
+function saveQaPrompt(value) {
+  try {
+    if (value === DEFAULT_QA_PROMPT) localStorage.removeItem(QA_PROMPT_KEY)
+    else localStorage.setItem(QA_PROMPT_KEY, value)
+  } catch {
+    // Storage unavailable (private mode, blocked) — edits just won't persist.
+  }
+}
+
+// A generated prompt with its own Copy button. Pass onChange to make it editable;
+// onReset (optional) adds a button that restores the default text.
+function PromptBox({ id, title, description, prompt, onChange, onReset }) {
   const [copyStatus, setCopyStatus] = useState(null) // 'copied' | 'failed'
   const copyTimer = useRef(null)
 
@@ -33,14 +65,29 @@ function PromptBox({ id, title, description, prompt }) {
             {copyStatus === 'copied' && <span className="text-success">Copied</span>}
             {copyStatus === 'failed' && <span className="text-error">Couldn’t copy</span>}
           </span>
+          {onReset && (
+            <button type="button" className="secondary" onClick={onReset}>
+              Reset
+            </button>
+          )}
           <button type="button" onClick={copy}>
             Copy prompt
           </button>
         </div>
       </div>
-      <pre className="prompt-text" tabIndex={0} aria-label={`${title} text`}>
-        {prompt}
-      </pre>
+      {onChange ? (
+        <textarea
+          className="prompt-text prompt-edit"
+          rows={14}
+          aria-label={`${title} text`}
+          value={prompt}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      ) : (
+        <pre className="prompt-text" tabIndex={0} aria-label={`${title} text`}>
+          {prompt}
+        </pre>
+      )}
     </section>
   )
 }
@@ -51,6 +98,12 @@ export default function AiPrompt() {
   const [profile, setProfile] = useState(null)
   const [loadError, setLoadError] = useState('')
   const [jobDescription, setJobDescription] = useState('')
+  const [qaPrompt, setQaPrompt] = useState(loadQaPrompt)
+
+  function updateQaPrompt(value) {
+    setQaPrompt(value)
+    saveQaPrompt(value)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -144,6 +197,15 @@ export default function AiPrompt() {
         title="Cover Letter Prompt"
         description="Best used in the same chat, right after the resume, so it can draw on that evidence."
         prompt={coverLetterPrompt}
+      />
+
+      <PromptBox
+        id="ap-qa"
+        title="Q/A Prompt"
+        description="Use in the same chat after the resume is generated, then paste the application questions. Editable — your changes are saved in this browser."
+        prompt={qaPrompt}
+        onChange={updateQaPrompt}
+        onReset={qaPrompt === DEFAULT_QA_PROMPT ? undefined : () => updateQaPrompt(DEFAULT_QA_PROMPT)}
       />
     </section>
   )
