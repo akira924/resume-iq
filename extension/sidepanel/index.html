@@ -96,7 +96,16 @@
               Cover letter
             </button>
           </div>
-          <p class="notice" id="doc-status" role="status" aria-live="polite"></p>
+          <div class="notice doc-notice" id="doc-notice" hidden>
+            <p id="doc-status" role="status" aria-live="polite"></p>
+            <button type="button" class="icon-button notice-action" id="view-pdf" title="Open PDF" aria-label="Open PDF" hidden>
+              <!-- Lucide "eye" icon (lucide v1.77.0, ISC license) -->
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <footer class="account">

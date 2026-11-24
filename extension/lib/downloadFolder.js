@@ -86,6 +86,7 @@ export async function fileExists(root, subfolder, fileName) {
 
 // Writes `blob` to <root>/<subfolder>/<fileName>, creating the subfolder if needed.
 // Overwrites an existing file, so check fileExists() first.
+// -> the saved file's FileSystemFileHandle.
 export async function saveToFolder(root, subfolder, fileName, blob) {
   const dir = await root.getDirectoryHandle(subfolder, { create: true })
   const file = await dir.getFileHandle(fileName, { create: true })
@@ -97,4 +98,5 @@ export async function saveToFolder(root, subfolder, fileName, blob) {
     await writable.abort().catch(() => {})
     throw err
   }
+  return file
 }

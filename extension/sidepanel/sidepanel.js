@@ -74,13 +74,34 @@ async function getDocData() {
   }
 }
 
+// The PDF saved by the last export (a FileSystemFileHandle), opened by the eye button.
+let savedPdf = null
+
 // kind: 'info' | 'success' | 'error'
-function setDocStatus(text, kind = 'info') {
-  const el = $('doc-status')
-  el.textContent = text
-  el.classList.toggle('notice-success', kind === 'success')
-  el.classList.toggle('notice-error', kind === 'error')
+// `file`: the saved PDF's handle; shows the eye button that opens it.
+function setDocStatus(text, kind = 'info', { file = null } = {}) {
+  const notice = $('doc-notice')
+  $('doc-status').textContent = text
+  notice.hidden = !text
+  notice.classList.toggle('notice-success', kind === 'success')
+  notice.classList.toggle('notice-error', kind === 'error')
+  savedPdf = file
+  $('view-pdf').hidden = !file
 }
+
+// Opens the saved PDF in a new tab, read back from disk so it shows exactly what was saved.
+$('view-pdf').addEventListener('click', async () => {
+  if (!savedPdf) return
+  try {
+    const file = await savedPdf.getFile()
+    // The URL stays valid while this panel is open; Chrome frees it when the panel closes.
+    const url = URL.createObjectURL(new Blob([file], { type: 'application/pdf' }))
+    await chrome.tabs.create({ url })
+  } catch (err) {
+    console.error('Failed to open the PDF', err)
+    setDocStatus('Could not open the PDF. It may have been moved or deleted.', 'error')
+  }
+})
 
 async function readClipboard() {
   try {
@@ -184,7 +205,8 @@ function askCompanyName(label) {
 }
 
 // Renders the PDF and saves it to <download folder>/<company_target>/<file name>.
-// -> the saved path, relative to the download folder's parent.
+// -> { path, file }: the saved path, relative to the download folder's parent, and the
+//    saved file's handle.
 async function generate(kind, text) {
   const gen = GENERATORS[kind]
 
@@ -210,8 +232,8 @@ async function generate(kind, text) {
     throw new AlertError(`${path} already exists. Delete or rename it first; it wasn't overwritten.`)
   }
 
-  await saveToFolder(folder, company, fileName, await gen.render(pdf, data, parsed))
-  return path
+  const file = await saveToFolder(folder, company, fileName, await gen.render(pdf, data, parsed))
+  return { path, file }
 }
 
 let generating = false
@@ -226,8 +248,8 @@ document.addEventListener('click', async (e) => {
     // Read the clipboard first, while the click still counts as a user gesture.
     const text = await readClipboard()
     if (!text.trim()) throw new Error('The clipboard is empty. Copy the JSON from your AI chat first.')
-    const path = await generate(button.dataset.generate, text)
-    setDocStatus(`Saved to ${path}`, 'success')
+    const { path, file } = await generate(button.dataset.generate, text)
+    setDocStatus(`Saved to ${path}`, 'success', { file })
   } catch (err) {
     if (err instanceof CancelledError) {
       setDocStatus('Cancelled.')

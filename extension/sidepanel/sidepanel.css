@@ -473,6 +473,31 @@ button.ghost:hover:not(:disabled) {
   border-color: transparent;
 }
 
+/* Export status, with the "open PDF" button on the right once a PDF is saved. */
+.doc-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-notice > p {
+  flex: 1;
+  min-width: 0;
+}
+
+.notice-action {
+  width: 28px;
+  height: 28px;
+  margin: -4px -6px -4px 0;
+  color: inherit;
+}
+
+.notice-action:hover:not(:disabled) {
+  color: inherit;
+  background: color-mix(in oklab, currentColor 12%, transparent);
+  border-color: transparent;
+}
+
 #error-message {
   max-width: 320px;
 }
