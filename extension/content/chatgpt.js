@@ -1,5 +1,5 @@
 // Adds the ResumeIQ action buttons ("Resume", "Cover letter") just above ChatGPT's
-// chat input, left aligned, and a pencil "Q/A" button on the same line, right aligned.
+// chat input, left aligned, followed by a pencil "Q/A" button.
 // Buttons use the accent color of the user's resume theme.
 //
 // The bar is not inserted into ChatGPT's own DOM: React replaces the composer when you
@@ -67,13 +67,7 @@
         width: 28px;
         padding: 0;
         justify-content: center;
-        margin-left: auto;
         flex: none;
-      }
-      .status {
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
       }
       .status {
         font: 12px/1.3 system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -150,9 +144,9 @@
         (a) =>
           `<button type="button" class="${a.variant}" data-action="${a.id}">${SCOPE_ICON}<span>${a.label}</span></button>`,
       ).join('')}
-      <span class="status" role="status" aria-live="polite"></span>
-      <button type="button" class="primary icon-button" data-action="qa"
+      <button type="button" class="secondary icon-button" data-action="qa"
               aria-label="Q/A prompt" title="Q/A prompt">${PENCIL_ICON}</button>
+      <span class="status" role="status" aria-live="polite"></span>
     </div>
   `
 
@@ -333,7 +327,7 @@
     log(status)
   }
 
-  // Put the bar just above the composer, as wide as it, or hide it when there is none.
+  // Put the bar just above the composer's top-left corner, or hide it when there is none.
   function place() {
     if (!host.isConnected) document.documentElement.append(host)
     const rect = findComposer()?.composer.getBoundingClientRect()
@@ -342,7 +336,6 @@
       return report('composer not found')
     }
     host.hidden = false
-    host.style.width = `${Math.round(rect.width)}px`
     const top = Math.max(0, rect.top - host.offsetHeight - GAP)
     host.style.transform = `translate(${Math.round(rect.left)}px, ${Math.round(top)}px)`
     report('buttons shown')
