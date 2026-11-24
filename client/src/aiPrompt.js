@@ -159,7 +159,9 @@ const FORMATTING_RULES = `- Only one code block of JSON
 - ATS-safe language only`
 
 const FINAL_CHECK = `- Must be only one CODE BLOCK of VALID JSON.
-- Must be generated strictly under all of the content rules.`
+- All job description technologies are included.
+- Sentence length requirements are met.
+- Sentence count requirements are met.`
 
 export function buildResumePrompt(profile, jobDescription = '') {
   const sections = [
