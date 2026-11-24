@@ -9,9 +9,29 @@ import {
   getDownloadFolder,
   saveToFolder,
 } from '../lib/downloadFolder.js'
+import { themeAccent } from '../lib/themes.js'
 
 const $ = (id) => document.getElementById(id)
 const views = ['loading', 'error', 'login', 'home']
+
+// ---- Color theme ----
+
+// The panel's accent follows the resume color theme. The last one seen is cached so the
+// panel opens in the right colors before the settings have loaded.
+const THEME_KEY = 'resumeiq:theme'
+
+function applyTheme(theme) {
+  document.documentElement.style.setProperty('--theme', themeAccent(theme))
+  try {
+    if (theme) localStorage.setItem(THEME_KEY, theme)
+  } catch {}
+}
+
+let cachedTheme = null
+try {
+  cachedTheme = localStorage.getItem(THEME_KEY)
+} catch {}
+applyTheme(cachedTheme)
 
 function show(view) {
   for (const v of views) $(`view-${v}`).hidden = v !== view
@@ -42,7 +62,7 @@ function prefetchDocData() {
     settings: s.settings, // null until saved once; the generator then uses the defaults
     profile: p.profile,
   }))
-  docData.catch(() => {}) // reported on click
+  docData.then(({ settings }) => applyTheme(settings?.theme)).catch(() => {}) // reported on click
 }
 
 async function getDocData() {
@@ -54,10 +74,12 @@ async function getDocData() {
   }
 }
 
-function setDocStatus(text, { error = false } = {}) {
+// kind: 'info' | 'success' | 'error'
+function setDocStatus(text, kind = 'info') {
   const el = $('doc-status')
   el.textContent = text
-  el.classList.toggle('error', error)
+  el.classList.toggle('notice-success', kind === 'success')
+  el.classList.toggle('notice-error', kind === 'error')
 }
 
 async function readClipboard() {
@@ -75,6 +97,7 @@ function renderFolder(handle) {
   el.textContent = handle ? handle.name : 'Not set'
   el.title = handle ? handle.name : ''
   el.classList.toggle('unset', !handle)
+  $('choose-folder').textContent = handle ? 'Change' : 'Choose'
 }
 
 getDownloadFolder().then(renderFolder)
@@ -84,7 +107,7 @@ $('choose-folder').addEventListener('click', async () => {
     const handle = await chooseDownloadFolder()
     if (handle) renderFolder(handle)
   } catch (err) {
-    setDocStatus(err.message || 'Could not set the download folder.', { error: true })
+    setDocStatus(err.message || 'Could not set the save location.', 'error')
   }
 })
 
@@ -124,8 +147,8 @@ function askCompanyName(label) {
   const errorEl = $('company-error')
 
   $('company-dialog-text').textContent =
-    `The ${label} JSON doesn't name the company (company_target is missing or "Unknown"). ` +
-    'Enter it to choose the folder the PDF is saved in.'
+    `The ${label} JSON doesn't include a company name. ` +
+    'Enter one to name the folder the PDF is saved in.'
   form.reset()
   errorEl.hidden = true
 
@@ -166,7 +189,7 @@ async function generate(kind, text) {
   const gen = GENERATORS[kind]
 
   const folder = await getDownloadFolder()
-  if (!folder) throw new AlertError('Choose a download folder first.')
+  if (!folder) throw new AlertError('Choose a save location first.')
   if (!(await ensureWriteAccess(folder))) {
     throw new AlertError(`ResumeIQ needs permission to save into "${folder.name}". Click the button again and allow it.`)
   }
@@ -198,20 +221,20 @@ document.addEventListener('click', async (e) => {
   generating = true
   const buttons = document.querySelectorAll('[data-generate]')
   buttons.forEach((b) => (b.disabled = true))
-  setDocStatus('Generating…')
+  setDocStatus('Generating PDF…')
   try {
     // Read the clipboard first, while the click still counts as a user gesture.
     const text = await readClipboard()
-    if (!text.trim()) throw new Error('The clipboard is empty.')
+    if (!text.trim()) throw new Error('The clipboard is empty. Copy the JSON from your AI chat first.')
     const path = await generate(button.dataset.generate, text)
-    setDocStatus(`Saved ${path}`)
+    setDocStatus(`Saved to ${path}`, 'success')
   } catch (err) {
     if (err instanceof CancelledError) {
       setDocStatus('Cancelled.')
       return
     }
     const message = err.message || 'Could not generate the PDF.'
-    setDocStatus(message, { error: true })
+    setDocStatus(message, 'error')
     if (err instanceof AlertError) alert(message)
   } finally {
     generating = false
@@ -257,7 +280,7 @@ $('login-form').addEventListener('submit', async (e) => {
 
   errorEl.hidden = true
   if (!email || !password) {
-    errorEl.textContent = 'Email and password are required'
+    errorEl.textContent = 'Enter your email and password.'
     errorEl.hidden = false
     return
   }
@@ -286,6 +309,9 @@ $('logout').addEventListener('click', async () => {
 })
 
 $('retry').addEventListener('click', () => refresh())
+
+// Reloads the whole side panel page (fresh session check, settings and PDF generator).
+$('reload-panel').addEventListener('click', () => location.reload())
 
 // Links/buttons with data-open="/path" open that page of the web app in a new tab.
 document.addEventListener('click', (e) => {

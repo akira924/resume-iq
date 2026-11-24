@@ -4,6 +4,19 @@ A Manifest V3 extension that opens ResumeIQ in Chrome's right-hand side panel.
 It's plain JavaScript. The one built piece is the PDF generator in `sidepanel/vendor/`, which is
 bundled from the client's resume code so the PDFs match the web app exactly.
 
+## Store description
+
+`manifest.json` holds a short description, because Chrome limits it to 132 characters. Use this full
+text for the Chrome Web Store listing:
+
+> A sniper never takes a shot without analyzing the target. Your job application should be no different.
+>
+> ResumeIQ transforms your resume into a precision-tailored application, aligning your skills, experience, and qualifications with every target job description.
+>
+> No guesswork. No generic resumes. Just strategic positioning and intelligent targeting.
+>
+> Identify the target. Align your strengths. Apply with precision.
+
 ## Run it locally
 
 1. Start the server (`cd server && npm run dev`) and the client (`cd client && npm run dev`).

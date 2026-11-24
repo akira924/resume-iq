@@ -2,10 +2,22 @@
   "manifest_version": 3,
   "name": "ResumeIQ",
   "version": "0.1.0",
-  "description": "ResumeIQ in the browser side panel.",
+  "description": "A sniper never takes a shot without analyzing the target. Your job application should be no different.",
   "minimum_chrome_version": "116",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "action": {
-    "default_title": "Open ResumeIQ"
+    "default_title": "Open ResumeIQ",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
   },
   "background": {
     "service_worker": "background.js",
