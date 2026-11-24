@@ -151,7 +151,7 @@ JOB TITLES AND HEADLINE (non-negotiable)
 Must be ONLY 4-12 technologies from that role's evidence line, the posting's terms first.
 
 "role_description":
-Must be 1-2 sentences (20-45 words), introduces bullet points: the project, platform, product, or client, and its purpose and scale, then the part of the system the bullets show, framed around the posting's work and naming 2-4 of the key technologies those bullets use.`
+Must be 1-2 sentences (20-45 words), introduces bullet points: the project, platform, product, or client, and its purpose and scale, then the part of the system the bullets show, framed around the posting's work and naming 2-4 of the key technologies those bullets use. Write in a professional resume style.`
 
 const FORMATTING_RULES = `- Only one code block of JSON
 - No questions or comments
