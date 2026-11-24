@@ -4,6 +4,7 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import profileRoutes from './routes/profile.js';
 import resumeSettingsRoutes from './routes/resumeSettings.js';
+import promptRoutes from './routes/prompts.js';
 
 export function createApp() {
   const app = express();
@@ -16,6 +17,7 @@ export function createApp() {
   app.use('/api/users', userRoutes);
   app.use('/api/profile', profileRoutes);
   app.use('/api/resume-settings', resumeSettingsRoutes);
+  app.use('/api/prompts', promptRoutes);
 
   app.use('/api', (req, res) => res.status(404).json({ message: 'Not found' }));
 

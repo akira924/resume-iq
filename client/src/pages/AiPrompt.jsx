@@ -2,41 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { buildCoverLetterPrompt, buildResumePrompt } from '../aiPrompt'
+import { useQaPrompt } from '../hooks/useQaPrompt'
 
-const QA_PROMPT_KEY = 'resumeiq.qaPrompt'
-
-const DEFAULT_QA_PROMPT = `I am filling in the online application form for the job below.
-
-For each question, write an answer that is (1) true to my background, (2) under the character limit I give, and (3) uses the ad's keywords where they fit naturally, within only one paragraph based on the job description and my resume generated.
-
-For yes/no knock-out questions, only answer "Yes" or "No".
-
-For asking only number of years of experience, only answer enough number.
-
-Write answers as a human candidate, so those answers are not flagged as an AI generated sentence.
-
-Use ", ', - instead of smart characters.`
-
-function loadQaPrompt() {
-  try {
-    return localStorage.getItem(QA_PROMPT_KEY) ?? DEFAULT_QA_PROMPT
-  } catch {
-    return DEFAULT_QA_PROMPT
-  }
-}
-
-function saveQaPrompt(value) {
-  try {
-    if (value === DEFAULT_QA_PROMPT) localStorage.removeItem(QA_PROMPT_KEY)
-    else localStorage.setItem(QA_PROMPT_KEY, value)
-  } catch {
-    // Storage unavailable (private mode, blocked) — edits just won't persist.
-  }
+const QA_SAVE_STATUS = {
+  saving: <span className="muted">Saving…</span>,
+  saved: <span className="text-success">Saved</span>,
+  'save-error': <span className="text-error">Couldn’t save</span>,
 }
 
 // A generated prompt with its own Copy button. Pass onChange to make it editable;
-// onReset (optional) adds a button that restores the default text.
-function PromptBox({ id, title, description, prompt, onChange, onReset }) {
+// onReset (optional) adds a button that restores the default text; `status` is shown
+// next to the buttons when there's no copy message.
+function PromptBox({ id, title, description, prompt, onChange, onReset, status }) {
   const [copyStatus, setCopyStatus] = useState(null) // 'copied' | 'failed'
   const copyTimer = useRef(null)
 
@@ -64,6 +41,7 @@ function PromptBox({ id, title, description, prompt, onChange, onReset }) {
           <span aria-live="polite" className="form-actions-status">
             {copyStatus === 'copied' && <span className="text-success">Copied</span>}
             {copyStatus === 'failed' && <span className="text-error">Couldn’t copy</span>}
+            {!copyStatus && status}
           </span>
           {onReset && (
             <button type="button" className="secondary" onClick={onReset}>
@@ -98,12 +76,7 @@ export default function AiPrompt() {
   const [profile, setProfile] = useState(null)
   const [loadError, setLoadError] = useState('')
   const [jobDescription, setJobDescription] = useState('')
-  const [qaPrompt, setQaPrompt] = useState(loadQaPrompt)
-
-  function updateQaPrompt(value) {
-    setQaPrompt(value)
-    saveQaPrompt(value)
-  }
+  const qa = useQaPrompt()
 
   useEffect(() => {
     let cancelled = false
@@ -199,14 +172,28 @@ export default function AiPrompt() {
         prompt={coverLetterPrompt}
       />
 
-      <PromptBox
-        id="ap-qa"
-        title="Q/A Prompt"
-        description="Use after the resume, then paste the questions. Editable and saved in this browser."
-        prompt={qaPrompt}
-        onChange={updateQaPrompt}
-        onReset={qaPrompt === DEFAULT_QA_PROMPT ? undefined : () => updateQaPrompt(DEFAULT_QA_PROMPT)}
-      />
+      {qa.prompt !== null ? (
+        <PromptBox
+          id="ap-qa"
+          title="Q/A Prompt"
+          description="Use after the resume, then paste the questions. Edits save automatically."
+          prompt={qa.prompt}
+          onChange={qa.setPrompt}
+          onReset={qa.prompt === qa.defaultPrompt ? undefined : qa.reset}
+          status={QA_SAVE_STATUS[qa.status]}
+        />
+      ) : (
+        <section className="form-section" aria-labelledby="ap-qa">
+          <div className="section-header">
+            <h2 id="ap-qa">Q/A Prompt</h2>
+            {qa.status === 'load-error' ? (
+              <p className="text-error">Couldn’t load the Q/A prompt. Reload the page to try again.</p>
+            ) : (
+              <p className="muted">Loading…</p>
+            )}
+          </div>
+        </section>
+      )}
     </section>
   )
 }

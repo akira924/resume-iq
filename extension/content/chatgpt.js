@@ -1,5 +1,6 @@
 // Adds the ResumeIQ action buttons ("Resume", "Cover letter") just above ChatGPT's
-// chat input, left aligned. Buttons use the accent color of the user's resume theme.
+// chat input, left aligned, and a pencil "Q/A" button on the same line, right aligned.
+// Buttons use the accent color of the user's resume theme.
 //
 // The bar is not inserted into ChatGPT's own DOM: React replaces the composer when you
 // switch chats and would drop anything placed next to it. Instead the bar lives directly
@@ -18,6 +19,13 @@
       <circle cx="12" cy="12" r="9"/>
       <path d="M12 1.5v5M12 17.5v5M1.5 12h5M17.5 12h5"/>
       <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+    </svg>`
+
+  const PENCIL_ICON = `
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+      <path d="m15 5 4 4"/>
     </svg>`
 
   // `primary` is filled with the accent color; `secondary` is a light tint of it.
@@ -41,6 +49,8 @@
         z-index: 20;
         top: 0;
         left: 0;
+        /* The host spans the composer's width; only the buttons take clicks. */
+        pointer-events: none;
       }
       :host([hidden]) {
         display: none;
@@ -49,6 +59,21 @@
         display: flex;
         align-items: center;
         gap: 8px;
+      }
+      .bar button {
+        pointer-events: auto;
+      }
+      .icon-button {
+        width: 28px;
+        padding: 0;
+        justify-content: center;
+        margin-left: auto;
+        flex: none;
+      }
+      .status {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .status {
         font: 12px/1.3 system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -126,6 +151,8 @@
           `<button type="button" class="${a.variant}" data-action="${a.id}">${SCOPE_ICON}<span>${a.label}</span></button>`,
       ).join('')}
       <span class="status" role="status" aria-live="polite"></span>
+      <button type="button" class="primary icon-button" data-action="qa"
+              aria-label="Q/A prompt" title="Q/A prompt">${PENCIL_ICON}</button>
     </div>
   `
 
@@ -141,6 +168,7 @@
   const ACTION_HANDLERS = {
     resume: sendResumePrompt,
     'cover-letter': sendCoverLetterPrompt,
+    qa: sendQaPrompt,
   }
 
   let busy = false
@@ -183,6 +211,12 @@
   async function sendCoverLetterPrompt() {
     setStatus('Preparing…', { sticky: true })
     await sendPrompt(await getPrompt('coverLetterPrompt'))
+  }
+
+  // Q/A: the user's saved Q/A prompt alone, also meant to follow the resume prompt.
+  async function sendQaPrompt() {
+    setStatus('Preparing…', { sticky: true })
+    await sendPrompt(await getPrompt('qaPrompt'))
   }
 
   // A prefetched prompt from the context, loading it now if the prefetch hadn't finished.
@@ -299,7 +333,7 @@
     log(status)
   }
 
-  // Put the bar just above the composer's top-left corner, or hide it when there is none.
+  // Put the bar just above the composer, as wide as it, or hide it when there is none.
   function place() {
     if (!host.isConnected) document.documentElement.append(host)
     const rect = findComposer()?.composer.getBoundingClientRect()
@@ -308,6 +342,7 @@
       return report('composer not found')
     }
     host.hidden = false
+    host.style.width = `${Math.round(rect.width)}px`
     const top = Math.max(0, rect.top - host.offsetHeight - GAP)
     host.style.transform = `translate(${Math.round(rect.left)}px, ${Math.round(top)}px)`
     report('buttons shown')
@@ -338,7 +373,7 @@
 
   // ---- Prefetched data: theme color and resume prompt ----
 
-  // { accent, resumePrompt, coverLetterPrompt, error } from the background worker.
+  // { accent, resumePrompt, coverLetterPrompt, qaPrompt, error } from the background worker.
   let context = null
 
   async function loadContext() {

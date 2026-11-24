@@ -12,9 +12,14 @@ chrome.sidePanel
 //
 // Returns the button accent color, the resume prompt built without a job description
 // (the content script appends the clipboard text under its heading) and the cover letter
-// prompt. `error` explains why the prompts are null.
+// prompt, and the user's Q/A prompt (edited on the app's AI Prompt page). `error` explains
+// why the prompts are null.
 async function getContext() {
-  const [settings, profile] = await Promise.allSettled([api('/resume-settings'), api('/profile')])
+  const [settings, profile, prompts] = await Promise.allSettled([
+    api('/resume-settings'),
+    api('/profile'),
+    api('/prompts'),
+  ])
 
   // Signed out, server down, or no settings saved yet: fall back to the default theme.
   const accent = themeAccent(
@@ -27,7 +32,8 @@ async function getContext() {
       accent,
       resumePrompt: buildResumePrompt(p),
       coverLetterPrompt: buildCoverLetterPrompt(p),
-      error: null,
+      qaPrompt: prompts.status === 'fulfilled' ? prompts.value.qaPrompt : null,
+      error: prompts.status === 'fulfilled' ? null : prompts.reason?.message || 'Could not load your Q/A prompt.',
     }
   }
   const status = profile.reason?.status
@@ -35,7 +41,7 @@ async function getContext() {
     status === 401 || status === 403
       ? 'Sign in to ResumeIQ first (toolbar icon → side panel).'
       : profile.reason?.message || 'Could not load your ResumeIQ profile.'
-  return { accent, resumePrompt: null, coverLetterPrompt: null, error }
+  return { accent, resumePrompt: null, coverLetterPrompt: null, qaPrompt: null, error }
 }
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
