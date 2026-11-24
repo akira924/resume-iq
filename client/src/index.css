@@ -868,7 +868,13 @@ button.danger-outline {
   gap: 12px 16px;
 }
 
+.prompt-toolbar > .section-header {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
 .prompt-actions {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 12px;

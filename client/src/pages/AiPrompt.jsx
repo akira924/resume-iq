@@ -202,7 +202,7 @@ export default function AiPrompt() {
       <PromptBox
         id="ap-qa"
         title="Q/A Prompt"
-        description="Use in the same chat after the resume is generated, then paste the application questions. Editable — your changes are saved in this browser."
+        description="Use after the resume, then paste the questions. Editable and saved in this browser."
         prompt={qaPrompt}
         onChange={updateQaPrompt}
         onReset={qaPrompt === DEFAULT_QA_PROMPT ? undefined : () => updateQaPrompt(DEFAULT_QA_PROMPT)}
