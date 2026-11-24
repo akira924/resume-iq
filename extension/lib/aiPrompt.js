@@ -122,9 +122,10 @@ const CONTENT_RULES = `"company_target":
 - If the company name is not mentioned in the job description, set company name to Unknown
 
 JOB TITLES AND HEADLINE (non-negotiable)
-Every job title and headline must be 2–4 words and common industry titles
+- Every job title and headline must be 2–4 words.
+- Every job title and headline must be common industry titles
 - Job titles must be aligned with the job description
-- Job titles must follow a logical career progression and candidate's own seniority level.
+- Job titles must follow a logical career progression and keep the candidate's own seniority level.
 - Headline must reflect job titles and be aligned with the job description
 
 "summary"
