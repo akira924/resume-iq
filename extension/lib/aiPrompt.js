@@ -231,10 +231,10 @@ Keep the total length tight. Shorter is better when the fit is clear.
     "github": "",
     "website": ""
   },
-  "cover_letter": ""
+  "cover_letter": "Cover letter content here ..."
 }
 
-Must be only one code block.`
+Output must be valid JSON data inside only one code block.`
 
 export function buildCoverLetterPrompt(profile) {
   return coverLetterInstructions(clean(profile.name))
