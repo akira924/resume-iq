@@ -35,8 +35,6 @@
     { id: 'cover-letter', label: 'Cover letter', variant: 'secondary' },
   ]
 
-  const log = (...args) => console.info('[ResumeIQ]', ...args)
-
   const host = document.createElement('div')
   host.id = HOST_ID
   host.hidden = true
@@ -178,7 +176,7 @@
     try {
       await ACTION_HANDLERS[button.dataset.action]?.()
     } catch (err) {
-      log('action failed', err)
+      console.error('[ResumeIQ] action failed', err)
       setStatus(err.message || 'Something went wrong.', { error: true })
     } finally {
       busy = false
@@ -321,25 +319,17 @@
     return input ? { input, composer } : null
   }
 
-  let lastStatus = ''
-  function report(status) {
-    if (status === lastStatus) return
-    lastStatus = status
-    log(status)
-  }
-
   // Put the bar just above the composer's top-left corner, or hide it when there is none.
   function place() {
     if (!host.isConnected) document.documentElement.append(host)
     const rect = findComposer()?.composer.getBoundingClientRect()
     if (!rect || rect.width === 0) {
       host.hidden = true
-      return report('composer not found')
+      return
     }
     host.hidden = false
     const top = Math.max(0, rect.top - host.offsetHeight - GAP)
     host.style.transform = `translate(${Math.round(rect.left)}px, ${Math.round(top)}px)`
-    report('buttons shown')
   }
 
   // Re-place once per frame at most, whenever something could have moved the composer:

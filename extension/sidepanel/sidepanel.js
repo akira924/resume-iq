@@ -227,8 +227,8 @@ function askCompanyName(label) {
 }
 
 // Renders the PDF and saves it to <download folder>/<company_target>/<file name>.
-// -> { path, file, company, label }: the saved path, relative to the download folder's parent,
-//    the saved file's handle, the company (folder) name, and the document label.
+// -> { path, file, company }: the saved path, relative to the download folder's parent,
+//    the saved file's handle, and the company (folder) name.
 async function generate(kind, text) {
   const gen = GENERATORS[kind]
 
@@ -255,7 +255,7 @@ async function generate(kind, text) {
   }
 
   const file = await saveToFolder(folder, company, fileName, await gen.render(pdf, data, parsed))
-  return { path, file, company, label: gen.label }
+  return { path, file, company }
 }
 
 let generating = false

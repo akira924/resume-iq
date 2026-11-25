@@ -216,19 +216,6 @@ button.secondary {
   color: var(--text-h);
 }
 
-.sidebar-title {
-  margin: 0 8px 4px;
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-}
-
-.sidebar-empty {
-  padding: 8px;
-}
-
 .sidebar-list {
   list-style: none;
   margin: 0;
