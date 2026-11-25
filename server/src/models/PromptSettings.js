@@ -6,6 +6,8 @@ const promptSettingsSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
     qaPrompt: { type: String, default: null },
+    // Beta: extra instructions inserted into the resume prompt. No default; null means none.
+    companyPrompt: { type: String, default: null },
   },
   { timestamps: true },
 );

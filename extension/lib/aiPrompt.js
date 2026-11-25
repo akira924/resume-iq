@@ -118,11 +118,12 @@ If not, return ONE JSON object with the following structure:
   ]
 }`
 
-const CONTENT_RULES = `"company_target":
+const COMPANY_TARGET_RULES = `"company_target":
 - Must find the company name from the job description
-- If the company name is not mentioned in the job description, set company name to Unknown
+- If the company name is not mentioned in the job description, set company name to Unknown`
 
-JOB TITLES AND HEADLINE (non-negotiable)
+// The user's Tailored Company Prompt (AI Prompt page) goes between these two parts.
+const ROLE_CONTENT_RULES = `JOB TITLES AND HEADLINE (non-negotiable)
 - Every job title and headline must be 2–4 words.
 - Every job title and headline must be common industry titles
 - Job titles must be aligned with the job description
@@ -167,11 +168,13 @@ const FINAL_CHECK = `- Must be only one CODE BLOCK of VALID JSON.
 - Sentence length requirements are met.
 - Sentence count requirements are met.`
 
-export function buildResumePrompt(profile, jobDescription = '') {
+// companyPrompt: the user's Tailored Company Prompt; left out when blank.
+export function buildResumePrompt(profile, jobDescription = '', companyPrompt = '') {
+  const contentRules = [COMPANY_TARGET_RULES, clean(companyPrompt), ROLE_CONTENT_RULES].filter(Boolean).join('\n\n')
   const sections = [
     ['CANDIDATE PROFILE', profileSection(profile)],
     ['OUTPUT FORMAT', OUTPUT_FORMAT],
-    ['JSON CONTENT GENERATION RULES (STRICT)', CONTENT_RULES],
+    ['JSON CONTENT GENERATION RULES (STRICT)', contentRules],
     ['FORMATTING RULES', FORMATTING_RULES],
     ['FINAL CHECK', FINAL_CHECK],
     ['JOB DESCRIPTION', clean(jobDescription)],

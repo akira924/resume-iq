@@ -12,7 +12,8 @@ chrome.sidePanel
 //
 // Returns the button accent color, the resume prompt built without a job description
 // (the content script appends the clipboard text under its heading) and the cover letter
-// prompt, and the user's Q/A prompt (edited on the app's AI Prompt page). `error` explains
+// prompt, and the user's Q/A prompt (edited on the app's AI Prompt page; the resume prompt
+// also includes their Tailored Company Prompt from there). `error` explains
 // why the prompts are null.
 async function getContext() {
   const [settings, profile, prompts] = await Promise.allSettled([
@@ -28,9 +29,10 @@ async function getContext() {
 
   if (profile.status === 'fulfilled') {
     const p = profile.value.profile
+    const companyPrompt = prompts.status === 'fulfilled' ? prompts.value.companyPrompt : ''
     return {
       accent,
-      resumePrompt: buildResumePrompt(p),
+      resumePrompt: buildResumePrompt(p, '', companyPrompt),
       coverLetterPrompt: buildCoverLetterPrompt(p),
       qaPrompt: prompts.status === 'fulfilled' ? prompts.value.qaPrompt : null,
       error: prompts.status === 'fulfilled' ? null : prompts.reason?.message || 'Could not load your Q/A prompt.',

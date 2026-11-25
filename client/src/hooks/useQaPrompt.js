@@ -2,27 +2,24 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '../api/client'
 
 const SAVE_DELAY_MS = 600
-// Where edits lived before the prompt was saved on the server; moved over once, then removed.
-const LEGACY_KEY = 'resumeiq.qaPrompt'
+// Where Q/A edits lived before the prompt was saved on the server; moved over once, then removed.
+const LEGACY_QA_KEY = 'resumeiq.qaPrompt'
 
-function takeLegacyPrompt() {
+function takeLegacyQaPrompt() {
   try {
-    const raw = localStorage.getItem(LEGACY_KEY)
-    localStorage.removeItem(LEGACY_KEY)
+    const raw = localStorage.getItem(LEGACY_QA_KEY)
+    localStorage.removeItem(LEGACY_QA_KEY)
     return raw
   } catch {
     return null
   }
 }
 
-function putPrompt(qaPrompt, options) {
-  return api('/prompts', { method: 'PUT', body: { qaPrompt }, ...options })
-}
-
-// The signed-in user's Q/A prompt, loaded from and autosaved to the server (the Chrome
-// extension's Q/A button sends the saved version). `prompt` is null until loaded.
+// One editable prompt from GET/PUT /api/prompts (`field` is its key there), loaded from and
+// autosaved to the server. `prompt` is null until loaded. `onLoad(data)` returns the text to
+// show plus `migrate: true` when that text still needs saving.
 // `status` is one of: loading | load-error | idle | saving | saved | save-error
-export function useQaPrompt() {
+function usePromptSetting(field, onLoad) {
   const [prompt, setPromptState] = useState(null)
   const [defaultPrompt, setDefaultPrompt] = useState(null)
   const [status, setStatus] = useState('loading')
@@ -30,6 +27,12 @@ export function useQaPrompt() {
   const unsaved = useRef(null) // latest text not yet sent to the server
   const timer = useRef(null)
   const saveSeq = useRef(0)
+  const onLoadRef = useRef(onLoad)
+
+  const put = useCallback(
+    (text, options) => api('/prompts', { method: 'PUT', body: { [field]: text }, ...options }),
+    [field],
+  )
 
   const flush = useCallback(async () => {
     clearTimeout(timer.current)
@@ -39,7 +42,7 @@ export function useQaPrompt() {
     const seq = ++saveSeq.current
     setStatus('saving')
     try {
-      await putPrompt(next)
+      await put(next)
       if (seq === saveSeq.current) setStatus('saved')
     } catch {
       if (seq === saveSeq.current) {
@@ -47,7 +50,7 @@ export function useQaPrompt() {
         setStatus('save-error')
       }
     }
-  }, [])
+  }, [put])
 
   const setPrompt = useCallback(
     (next) => {
@@ -64,15 +67,11 @@ export function useQaPrompt() {
     api('/prompts')
       .then((data) => {
         if (cancelled) return
-        setDefaultPrompt(data.defaultQaPrompt)
-        const legacy = takeLegacyPrompt()
-        if (legacy && data.qaPromptIsDefault && legacy !== data.defaultQaPrompt) {
-          setStatus('idle')
-          setPrompt(legacy)
-        } else {
-          setPromptState(data.qaPrompt)
-          setStatus('idle')
-        }
+        const { text, defaultText, migrate } = onLoadRef.current(data)
+        setDefaultPrompt(defaultText)
+        setStatus('idle')
+        if (migrate) setPrompt(text)
+        else setPromptState(text)
       })
       .catch(() => !cancelled && setStatus('load-error'))
     return () => {
@@ -85,7 +84,7 @@ export function useQaPrompt() {
     const sendNow = () => {
       clearTimeout(timer.current)
       if (unsaved.current !== null) {
-        putPrompt(unsaved.current, { keepalive: true }).catch(() => {})
+        put(unsaved.current, { keepalive: true }).catch(() => {})
         unsaved.current = null
       }
     }
@@ -94,9 +93,26 @@ export function useQaPrompt() {
       window.removeEventListener('pagehide', sendNow)
       sendNow()
     }
-  }, [])
+  }, [put])
 
   const reset = useCallback(() => defaultPrompt !== null && setPrompt(defaultPrompt), [defaultPrompt, setPrompt])
 
   return { prompt, defaultPrompt, status, setPrompt, reset, retry: flush }
 }
+
+function loadQa(data) {
+  const legacy = takeLegacyQaPrompt()
+  if (legacy && data.qaPromptIsDefault && legacy !== data.defaultQaPrompt) {
+    return { text: legacy, defaultText: data.defaultQaPrompt, migrate: true }
+  }
+  return { text: data.qaPrompt, defaultText: data.defaultQaPrompt }
+}
+
+const loadCompany = (data) => ({ text: data.companyPrompt ?? '', defaultText: '' })
+
+// The signed-in user's Q/A prompt (the Chrome extension's Q/A button sends the saved version).
+export const useQaPrompt = () => usePromptSetting('qaPrompt', loadQa)
+
+// The signed-in user's Tailored Company Prompt (beta): inserted into the resume prompt, both
+// here and in the Chrome extension. Starts empty.
+export const useCompanyPrompt = () => usePromptSetting('companyPrompt', loadCompany)

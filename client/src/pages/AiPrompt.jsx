@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { buildCoverLetterPrompt, buildResumePrompt } from '../aiPrompt'
-import { useQaPrompt } from '../hooks/useQaPrompt'
+import { useCompanyPrompt, useQaPrompt } from '../hooks/useQaPrompt'
 
-const QA_SAVE_STATUS = {
+const SAVE_STATUS = {
   saving: <span className="muted">Saving…</span>,
   saved: <span className="text-success">Saved</span>,
   'save-error': <span className="text-error">Couldn’t save</span>,
@@ -76,6 +76,7 @@ export default function AiPrompt() {
   const [profile, setProfile] = useState(null)
   const [loadError, setLoadError] = useState('')
   const [jobDescription, setJobDescription] = useState('')
+  const company = useCompanyPrompt()
   const qa = useQaPrompt()
 
   useEffect(() => {
@@ -89,8 +90,8 @@ export default function AiPrompt() {
   }, [])
 
   const resumePrompt = useMemo(
-    () => (profile ? buildResumePrompt(profile, jobDescription) : ''),
-    [profile, jobDescription],
+    () => (profile ? buildResumePrompt(profile, jobDescription, company.prompt ?? '') : ''),
+    [profile, jobDescription, company.prompt],
   )
   const coverLetterPrompt = useMemo(() => (profile ? buildCoverLetterPrompt(profile) : ''), [profile])
 
@@ -158,6 +159,47 @@ export default function AiPrompt() {
         />
       </section>
 
+      <section className="form-section" aria-labelledby="ap-company">
+        <div className="prompt-toolbar">
+          <div className="section-header">
+            <h2 id="ap-company">
+              Tailored Company Prompt
+              <span className="tag tag-beta">Beta</span>
+            </h2>
+            <p className="muted">
+              Optional — added to the resume prompt’s generation rules, right after the company target. Edits save
+              automatically.
+            </p>
+          </div>
+          <div className="prompt-actions">
+            <span aria-live="polite" className="form-actions-status">
+              {company.status === 'load-error' ? (
+                <span className="text-error">Couldn’t load</span>
+              ) : (
+                SAVE_STATUS[company.status]
+              )}
+            </span>
+            {company.prompt && (
+              <button type="button" className="secondary" onClick={company.reset}>
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+        <label className="visually-hidden" htmlFor="ap-company-input">
+          Tailored company prompt
+        </label>
+        <textarea
+          id="ap-company-input"
+          className="prompt-jd"
+          rows={6}
+          value={company.prompt ?? ''}
+          disabled={company.prompt === null}
+          onChange={(e) => company.setPrompt(e.target.value)}
+          placeholder={company.status === 'loading' ? 'Loading…' : 'e.g. Emphasize experience relevant to this company’s products and industry…'}
+        />
+      </section>
+
       <PromptBox
         id="ap-resume"
         title="Resume Prompt"
@@ -180,7 +222,7 @@ export default function AiPrompt() {
           prompt={qa.prompt}
           onChange={qa.setPrompt}
           onReset={qa.prompt === qa.defaultPrompt ? undefined : qa.reset}
-          status={QA_SAVE_STATUS[qa.status]}
+          status={SAVE_STATUS[qa.status]}
         />
       ) : (
         <section className="form-section" aria-labelledby="ap-qa">

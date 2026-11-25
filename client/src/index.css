@@ -356,6 +356,15 @@ button.small {
   color: var(--muted);
 }
 
+.tag-beta {
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
 /* Status badges */
 .status {
   display: inline-block;

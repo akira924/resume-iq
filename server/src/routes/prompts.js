@@ -5,7 +5,7 @@ import { requireAuth } from '../middleware/auth.js';
 const router = Router();
 router.use(requireAuth);
 
-const QA_PROMPT_MAX_LENGTH = 10000;
+const PROMPT_MAX_LENGTH = 10000;
 
 // Used until the user edits the Q/A prompt, and again after they reset it.
 export const DEFAULT_QA_PROMPT = `I am filling in the online application form for the job below.
@@ -26,32 +26,57 @@ function toResponse(doc) {
     qaPrompt: custom || DEFAULT_QA_PROMPT,
     qaPromptIsDefault: !custom,
     defaultQaPrompt: DEFAULT_QA_PROMPT,
+    companyPrompt: doc?.companyPrompt || '',
   };
 }
 
-// GET /api/prompts — the signed-in user's Q/A prompt (their edit, or the default)
+// Checks one text field of the PUT body. Returns an error message, or null.
+function invalidText(raw) {
+  if (raw !== null && typeof raw !== 'string') return 'Must be text';
+  if (typeof raw === 'string' && raw.length > PROMPT_MAX_LENGTH) {
+    return `Must be at most ${PROMPT_MAX_LENGTH} characters`;
+  }
+  return null;
+}
+
+// GET /api/prompts — the signed-in user's Q/A prompt (their edit, or the default) and
+// Tailored Company Prompt ('' when none)
 router.get('/', async (req, res) => {
   const doc = await PromptSettings.findOne({ user: req.user._id }).lean();
   res.json(toResponse(doc));
 });
 
-// PUT /api/prompts — { qaPrompt }. null, blank, or the default text resets to the default.
+// PUT /api/prompts — { qaPrompt?, companyPrompt? }; fields left out stay unchanged.
+// qaPrompt: null, blank, or the default text resets to the default.
+// companyPrompt: null or blank clears it.
 router.put('/', async (req, res) => {
-  const raw = req.body?.qaPrompt;
-  if (raw !== null && typeof raw !== 'string') {
-    return res.status(400).json({ message: 'Invalid prompt', errors: { qaPrompt: 'Must be text' } });
+  const body = req.body ?? {};
+  const errors = {};
+  const $set = {};
+
+  if ('qaPrompt' in body) {
+    const raw = body.qaPrompt;
+    const error = invalidText(raw);
+    if (error) errors.qaPrompt = error;
+    else $set.qaPrompt = !raw?.trim() || raw === DEFAULT_QA_PROMPT ? null : raw;
   }
-  if (typeof raw === 'string' && raw.length > QA_PROMPT_MAX_LENGTH) {
-    return res.status(400).json({
-      message: 'Invalid prompt',
-      errors: { qaPrompt: `Must be at most ${QA_PROMPT_MAX_LENGTH} characters` },
-    });
+  if ('companyPrompt' in body) {
+    const raw = body.companyPrompt;
+    const error = invalidText(raw);
+    if (error) errors.companyPrompt = error;
+    else $set.companyPrompt = raw?.trim() ? raw : null;
   }
-  const qaPrompt = !raw?.trim() || raw === DEFAULT_QA_PROMPT ? null : raw;
+
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({ message: 'Invalid prompt', errors });
+  }
+  if (Object.keys($set).length === 0) {
+    return res.status(400).json({ message: 'Nothing to update' });
+  }
 
   const doc = await PromptSettings.findOneAndUpdate(
     { user: req.user._id },
-    { $set: { qaPrompt } },
+    { $set },
     { upsert: true, returnDocument: 'after', runValidators: true, lean: true },
   );
   res.json(toResponse(doc));
