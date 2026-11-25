@@ -74,31 +74,29 @@ async function getDocData() {
   }
 }
 
-// The PDF saved by the last export (a FileSystemFileHandle), opened by the eye button.
+// The PDF saved by the last export (a FileSystemFileHandle), opened by the open-PDF button.
 let savedPdf = null
 
-// kind: 'info' | 'success' | 'error'
-// `file`: the saved PDF's handle; shows the eye button that opens it.
-// `company` + `label`: after a save, a "<Label> for <Company>" line above `text`, with the
-// company highlighted so the user sees which application the PDF belongs to.
-function setDocStatus(text, kind = 'info', { file = null, company = '', label = '' } = {}) {
+// kind: 'info' | 'success' | 'error'. Success and error show the scope badge on the left and
+// pass a short `text`: the company name, or a brief reason.
+//   success: "Successful shot at the company." then, on the next line, the highlighted company.
+//   error:   "Couldn't shoot: <reason>."
+// The company name is shown as-is, with no period after it; the error sentence ends with
+// exactly one period. `detail` (the saved path, or the full error) becomes the hover
+// tooltip. `file`: the saved PDF's handle; shows the open-PDF button.
+function setDocStatus(text, kind = 'info', { file = null, detail = '' } = {}) {
   const notice = $('doc-notice')
   const status = $('doc-status')
-  if (company) {
+  if (kind === 'success') {
     const name = document.createElement('strong')
     name.className = 'company-highlight'
-    name.textContent = company
-    name.title = company
-    const heading = document.createElement('span')
-    heading.className = 'doc-heading'
-    heading.append(`${label.charAt(0).toUpperCase()}${label.slice(1)} for `, name)
-    const detail = document.createElement('span')
-    detail.className = 'doc-detail'
-    detail.textContent = text
-    status.replaceChildren(heading, detail)
+    name.textContent = text
+    name.title = text
+    status.replaceChildren('Successful shot at the company.', document.createElement('br'), name)
   } else {
-    status.textContent = text
+    status.textContent = kind === 'error' ? `Couldn’t shoot: ${text.replace(/\.+$/, '')}.` : text
   }
+  notice.title = detail
   notice.hidden = !text
   notice.classList.toggle('notice-success', kind === 'success')
   notice.classList.toggle('notice-error', kind === 'error')
@@ -116,7 +114,7 @@ $('view-pdf').addEventListener('click', async () => {
     await chrome.tabs.create({ url })
   } catch (err) {
     console.error('Failed to open the PDF', err)
-    setDocStatus('Could not open the PDF. It may have been moved or deleted.', 'error')
+    setDocStatus('PDF not found', 'error', { detail: 'Could not open the PDF. It may have been moved or deleted.' })
   }
 })
 
@@ -145,13 +143,20 @@ $('choose-folder').addEventListener('click', async () => {
     const handle = await chooseDownloadFolder()
     if (handle) renderFolder(handle)
   } catch (err) {
-    setDocStatus(err.message || 'Could not set the save location.', 'error')
+    setDocStatus('Save location not set', 'error', { detail: err.message || 'Could not set the save location.' })
   }
 })
 
-// An error shown as a browser alert (not just in the status line), for problems the user
-// must act on before the PDF can be saved.
-class AlertError extends Error {}
+// An error with a short `brief` for the status line; `message` holds the full explanation.
+class BriefError extends Error {
+  constructor(brief, message) {
+    super(message)
+    this.brief = brief
+  }
+}
+
+// A parser's full error message -> a brief reason for the status line.
+const briefParseError = (message) => (/missing|has no/i.test(message) ? 'JSON missing data' : 'Invalid JSON')
 
 // Each parser returns the PDF parts plus `companyTarget`; `render` turns those parts into a blob.
 // Resume: the clipboard must hold valid resume JSON.
@@ -228,14 +233,14 @@ async function generate(kind, text) {
   const gen = GENERATORS[kind]
 
   const folder = await getDownloadFolder()
-  if (!folder) throw new AlertError('Choose a save location first.')
+  if (!folder) throw new BriefError('No save location', 'Choose a save location first.')
   if (!(await ensureWriteAccess(folder))) {
-    throw new AlertError(`ResumeIQ needs permission to save into "${folder.name}". Click the button again and allow it.`)
+    throw new BriefError('No folder permission', `ResumeIQ needs permission to save into "${folder.name}". Click the button again and allow it.`)
   }
 
   const [pdf, data] = await Promise.all([loadPdfModule(), getDocData()])
   const parsed = gen.parse(pdf, data, text)
-  if (parsed.error) throw new Error(parsed.error)
+  if (parsed.error) throw new BriefError(briefParseError(parsed.error), parsed.error)
 
   let company = folderNameFor(parsed.companyTarget)
   if (isUnknownCompany(company)) {
@@ -246,7 +251,7 @@ async function generate(kind, text) {
   const fileName = gen.fileName(pdf, parsed)
   const path = `${folder.name}/${company}/${fileName}`
   if (await fileExists(folder, company, fileName)) {
-    throw new AlertError(`${path} already exists. Delete or rename it first; it wasn't overwritten.`)
+    throw new BriefError('File already exists', `${path} already exists. Delete or rename it first; it wasn't overwritten.`)
   }
 
   const file = await saveToFolder(folder, company, fileName, await gen.render(pdf, data, parsed))
@@ -264,17 +269,16 @@ document.addEventListener('click', async (e) => {
   try {
     // Read the clipboard first, while the click still counts as a user gesture.
     const text = await readClipboard()
-    if (!text.trim()) throw new Error('The clipboard is empty. Copy the JSON from your AI chat first.')
-    const { path, file, company, label } = await generate(button.dataset.generate, text)
-    setDocStatus(`Saved to ${path}`, 'success', { file, company, label })
+    if (!text.trim()) throw new BriefError('Clipboard is empty', 'The clipboard is empty. Copy the JSON from your AI chat first.')
+    const { path, file, company } = await generate(button.dataset.generate, text)
+    setDocStatus(company, 'success', { file, detail: `Saved to ${path}` })
   } catch (err) {
     if (err instanceof CancelledError) {
       setDocStatus('Cancelled.')
       return
     }
     const message = err.message || 'Could not generate the PDF.'
-    setDocStatus(message, 'error')
-    if (err instanceof AlertError) alert(message)
+    setDocStatus(err.brief || 'PDF generation failed', 'error', { detail: message })
   } finally {
     generating = false
     buttons.forEach((b) => (b.disabled = false))

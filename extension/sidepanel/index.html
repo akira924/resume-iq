@@ -11,7 +11,7 @@
       <img class="topbar-image" src="header.jpg" alt="" draggable="false" />
       <div class="topbar-text">
         <span class="brand">ResumeIQ</span>
-        <span class="tagline">Tailored resumes, on target</span>
+        <span class="tagline">Job hunters tailor resumes, on target.</span>
       </div>
     </header>
 
@@ -97,12 +97,29 @@
             </button>
           </div>
           <div class="notice doc-notice" id="doc-notice" hidden>
+            <!-- Scope badge, shown for success (target hit) and error (missed) only.
+                 Lucide "locate-fixed" / "locate-off" icons (lucide v1.77.0, ISC license). -->
+            <span class="notice-badge" aria-hidden="true">
+              <svg class="badge-hit" viewBox="0 0 24 24">
+                <path d="M2 12h3M19 12h3M12 2v3M12 19v3" />
+                <circle cx="12" cy="12" r="7" />
+                <circle class="badge-fill" cx="12" cy="12" r="3" />
+              </svg>
+              <svg class="badge-miss" viewBox="0 0 24 24">
+                <path d="M12 19v3M12 2v3M19 12h3M2 12h3" />
+                <path d="M18.89 13.24a7 7 0 0 0-8.13-8.13" />
+                <path d="M7.05 7.05a7 7 0 0 0 9.9 9.9" />
+                <path d="m2 2 20 20" />
+              </svg>
+            </span>
             <p id="doc-status" role="status" aria-live="polite"></p>
             <button type="button" class="icon-button notice-action" id="view-pdf" title="Open PDF" aria-label="Open PDF" hidden>
-              <!-- Lucide "eye" icon (lucide v1.77.0, ISC license) -->
+              <!-- Lucide "file-search" icon (lucide v1.77.0, ISC license) -->
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
-                <circle cx="12" cy="12" r="3" />
+                <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+                <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+                <circle cx="11.5" cy="14.5" r="2.5" />
+                <path d="M13.3 16.3 15 18" />
               </svg>
             </button>
           </div>

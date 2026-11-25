@@ -485,25 +485,18 @@ button.ghost:hover:not(:disabled) {
   min-width: 0;
 }
 
-/* After a save: "Resume for <Company>" with the company as a badge, then the saved path. */
-.doc-heading,
-.doc-detail {
-  display: block;
-}
-
-.doc-heading {
+/* Success / error: a short line (company name or brief reason); the full detail is the
+   notice's tooltip. */
+.doc-notice.notice-success > p,
+.doc-notice.notice-error > p {
   font-weight: 600;
 }
 
-.doc-detail {
-  margin-top: 4px;
-  font-size: 12px;
-  opacity: 0.85;
-}
-
+/* The company on its own line after a save, as a pill so it's easy to spot. */
 .company-highlight {
   display: inline-block;
-  max-width: 100%;
+  max-width: calc(100% - 0.5em);
+  margin-top: 3px;
   padding: 1px 8px;
   font-weight: 700;
   vertical-align: bottom;
@@ -512,6 +505,44 @@ button.ghost:hover:not(:disabled) {
   text-overflow: ellipsis;
   background: color-mix(in oklab, currentColor 16%, transparent);
   border-radius: 999px;
+}
+
+/* Left scope badge: an outlined circle as tall as the notice's content box (negative
+   margins keep it from growing the notice), with the icon filling most of it. */
+.notice-badge {
+  display: none;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: -4px 0 -4px -4px;
+  border: 2.5px solid currentColor;
+  border-radius: 50%;
+}
+
+.notice-success .notice-badge,
+.notice-error .notice-badge {
+  display: grid;
+}
+
+.notice-badge svg {
+  grid-area: 1 / 1;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.notice-badge .badge-fill {
+  fill: currentColor;
+}
+
+.notice-success .badge-miss,
+.notice-error .badge-hit {
+  display: none;
 }
 
 .notice-action {
