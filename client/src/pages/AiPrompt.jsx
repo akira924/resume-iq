@@ -12,8 +12,9 @@ const SAVE_STATUS = {
 
 // A generated prompt with its own Copy button. Pass onChange to make it editable;
 // onReset (optional) adds a button that restores the default text; `status` is shown
-// next to the buttons when there's no copy message.
-function PromptBox({ id, title, description, prompt, onChange, onReset, status }) {
+// next to the buttons when there's no copy message. `badge` is a small tag after the title;
+// copyable={false} hides the Copy button (for text that only feeds into another prompt).
+function PromptBox({ id, title, badge, description, prompt, placeholder, onChange, onReset, status, copyable = true }) {
   const [copyStatus, setCopyStatus] = useState(null) // 'copied' | 'failed'
   const copyTimer = useRef(null)
 
@@ -34,7 +35,10 @@ function PromptBox({ id, title, description, prompt, onChange, onReset, status }
     <section className="form-section" aria-labelledby={id}>
       <div className="prompt-toolbar">
         <div className="section-header">
-          <h2 id={id}>{title}</h2>
+          <h2 id={id}>
+            {title}
+            {badge && <span className="tag tag-beta">{badge}</span>}
+          </h2>
           <p className="muted">{description}</p>
         </div>
         <div className="prompt-actions">
@@ -48,9 +52,11 @@ function PromptBox({ id, title, description, prompt, onChange, onReset, status }
               Reset
             </button>
           )}
-          <button type="button" onClick={copy}>
-            Copy prompt
-          </button>
+          {copyable && (
+            <button type="button" onClick={copy}>
+              Copy prompt
+            </button>
+          )}
         </div>
       </div>
       {onChange ? (
@@ -59,6 +65,7 @@ function PromptBox({ id, title, description, prompt, onChange, onReset, status }
           rows={14}
           aria-label={`${title} text`}
           value={prompt}
+          placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
         />
       ) : (
@@ -159,46 +166,34 @@ export default function AiPrompt() {
         />
       </section>
 
-      <section className="form-section" aria-labelledby="ap-company">
-        <div className="prompt-toolbar">
+      {company.prompt !== null ? (
+        <PromptBox
+          id="ap-company"
+          title="Tailored Company Prompt"
+          badge="Beta"
+          description="Optional — added to the resume prompt right after the company target. Edits save automatically."
+          prompt={company.prompt}
+          placeholder="e.g. Emphasize experience relevant to this company’s products and industry…"
+          onChange={company.setPrompt}
+          onReset={company.prompt ? company.reset : undefined}
+          status={SAVE_STATUS[company.status]}
+          copyable={false}
+        />
+      ) : (
+        <section className="form-section" aria-labelledby="ap-company">
           <div className="section-header">
             <h2 id="ap-company">
               Tailored Company Prompt
               <span className="tag tag-beta">Beta</span>
             </h2>
-            <p className="muted">
-              Optional — added to the resume prompt’s generation rules, right after the company target. Edits save
-              automatically.
-            </p>
-          </div>
-          <div className="prompt-actions">
-            <span aria-live="polite" className="form-actions-status">
-              {company.status === 'load-error' ? (
-                <span className="text-error">Couldn’t load</span>
-              ) : (
-                SAVE_STATUS[company.status]
-              )}
-            </span>
-            {company.prompt && (
-              <button type="button" className="secondary" onClick={company.reset}>
-                Clear
-              </button>
+            {company.status === 'load-error' ? (
+              <p className="text-error">Couldn’t load the Tailored Company Prompt. Reload the page to try again.</p>
+            ) : (
+              <p className="muted">Loading…</p>
             )}
           </div>
-        </div>
-        <label className="visually-hidden" htmlFor="ap-company-input">
-          Tailored company prompt
-        </label>
-        <textarea
-          id="ap-company-input"
-          className="prompt-jd"
-          rows={6}
-          value={company.prompt ?? ''}
-          disabled={company.prompt === null}
-          onChange={(e) => company.setPrompt(e.target.value)}
-          placeholder={company.status === 'loading' ? 'Loading…' : 'e.g. Emphasize experience relevant to this company’s products and industry…'}
-        />
-      </section>
+        </section>
+      )}
 
       <PromptBox
         id="ap-resume"
