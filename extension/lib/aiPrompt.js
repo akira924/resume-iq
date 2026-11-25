@@ -68,7 +68,8 @@ function profileSection(p) {
   return blocks.join('\n\n')
 }
 
-const OUTPUT_FORMAT = `Return ONE JSON object with the following structure:
+const OUTPUT_FORMAT = `If the job requires security clearance, on-site only work, DO NOT generate a resume and answer the reason in error color briefly.
+If not, return ONE JSON object with the following structure:
 {
   "company_target": "",
   "personal_info": {
