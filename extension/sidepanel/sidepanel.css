@@ -485,6 +485,35 @@ button.ghost:hover:not(:disabled) {
   min-width: 0;
 }
 
+/* After a save: "Resume for <Company>" with the company as a badge, then the saved path. */
+.doc-heading,
+.doc-detail {
+  display: block;
+}
+
+.doc-heading {
+  font-weight: 600;
+}
+
+.doc-detail {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.company-highlight {
+  display: inline-block;
+  max-width: 100%;
+  padding: 1px 8px;
+  font-weight: 700;
+  vertical-align: bottom;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: color-mix(in oklab, currentColor 16%, transparent);
+  border-radius: 999px;
+}
+
 .notice-action {
   width: 28px;
   height: 28px;

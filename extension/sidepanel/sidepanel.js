@@ -79,9 +79,26 @@ let savedPdf = null
 
 // kind: 'info' | 'success' | 'error'
 // `file`: the saved PDF's handle; shows the eye button that opens it.
-function setDocStatus(text, kind = 'info', { file = null } = {}) {
+// `company` + `label`: after a save, a "<Label> for <Company>" line above `text`, with the
+// company highlighted so the user sees which application the PDF belongs to.
+function setDocStatus(text, kind = 'info', { file = null, company = '', label = '' } = {}) {
   const notice = $('doc-notice')
-  $('doc-status').textContent = text
+  const status = $('doc-status')
+  if (company) {
+    const name = document.createElement('strong')
+    name.className = 'company-highlight'
+    name.textContent = company
+    name.title = company
+    const heading = document.createElement('span')
+    heading.className = 'doc-heading'
+    heading.append(`${label.charAt(0).toUpperCase()}${label.slice(1)} for `, name)
+    const detail = document.createElement('span')
+    detail.className = 'doc-detail'
+    detail.textContent = text
+    status.replaceChildren(heading, detail)
+  } else {
+    status.textContent = text
+  }
   notice.hidden = !text
   notice.classList.toggle('notice-success', kind === 'success')
   notice.classList.toggle('notice-error', kind === 'error')
@@ -205,8 +222,8 @@ function askCompanyName(label) {
 }
 
 // Renders the PDF and saves it to <download folder>/<company_target>/<file name>.
-// -> { path, file }: the saved path, relative to the download folder's parent, and the
-//    saved file's handle.
+// -> { path, file, company, label }: the saved path, relative to the download folder's parent,
+//    the saved file's handle, the company (folder) name, and the document label.
 async function generate(kind, text) {
   const gen = GENERATORS[kind]
 
@@ -233,7 +250,7 @@ async function generate(kind, text) {
   }
 
   const file = await saveToFolder(folder, company, fileName, await gen.render(pdf, data, parsed))
-  return { path, file }
+  return { path, file, company, label: gen.label }
 }
 
 let generating = false
@@ -248,8 +265,8 @@ document.addEventListener('click', async (e) => {
     // Read the clipboard first, while the click still counts as a user gesture.
     const text = await readClipboard()
     if (!text.trim()) throw new Error('The clipboard is empty. Copy the JSON from your AI chat first.')
-    const { path, file } = await generate(button.dataset.generate, text)
-    setDocStatus(`Saved to ${path}`, 'success', { file })
+    const { path, file, company, label } = await generate(button.dataset.generate, text)
+    setDocStatus(`Saved to ${path}`, 'success', { file, company, label })
   } catch (err) {
     if (err instanceof CancelledError) {
       setDocStatus('Cancelled.')
